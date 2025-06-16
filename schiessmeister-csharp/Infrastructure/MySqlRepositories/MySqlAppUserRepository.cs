@@ -4,51 +4,30 @@ using schiessmeister_csharp.Domain.Repositories;
 
 namespace schiessmeister_csharp.Infrastructure.MySqlRepositories;
 
-public class MySqlAppUserRepository : IAppUserRepository {
-    private readonly MySqlDbContext _db;
+public class MySqlAppUserRepository(MySqlDbContext dbContext) : MySqlRepositoryBase<AppUser>(dbContext, dbContext.AppUsers), IAppUserRepository {
 
-    public MySqlAppUserRepository(MySqlDbContext dbContext) {
-        _db = dbContext;
+    public async Task<AppUser?> FindByIdWithOrgsAsync(int id) {
+        return await _db.AppUsers
+            .Include(u => u.OwnedOrganizations)
+            .FirstOrDefaultAsync(u => u.Id == id);
     }
 
-    public async Task<List<AppUser>> FindAllAsync() {
-        return await _db.AppUsers.ToListAsync();
+    public async Task<AppUser?> FindByIdWithRecordedCompsAsync(int id) {
+        return await _db.AppUsers
+            .Include(u => u.RecordedCompetitions)
+            .FirstOrDefaultAsync(u => u.Id == id);
     }
 
-    public async Task<AppUser?> FindByIdAsync(int id) {
-        return await _db.AppUsers.FindAsync(id);
-    }
+    public async Task<List<AppUser>> SearchAsync(string? searchTerm) {
+        if (string.IsNullOrWhiteSpace(searchTerm))
+            return await FindAllAsync();
 
-    public async Task<AppUser> AddAsync(AppUser entity) {
-        await _db.AppUsers.AddAsync(entity);
+        var compType = StringComparison.CurrentCultureIgnoreCase;
 
-        await _db.SaveChangesAsync();
-
-        return entity;
-    }
-
-    public async Task<AppUser> UpdateAsync(AppUser entity) {
-        var existing = await _db.AppUsers.FindAsync(entity.Id);
-
-        if (existing == null)
-            throw new InvalidOperationException("User does not exist");
-
-        _db.Entry(existing).CurrentValues.SetValues(entity);
-        _db.AppUsers.Update(existing);
-
-        await _db.SaveChangesAsync();
-
-        return existing;
-    }
-
-    public async Task DeleteAsync(AppUser entity) {
-        var existing = await _db.AppUsers.FindAsync(entity.Id);
-
-        if (existing == null)
-            throw new InvalidOperationException("User does not exist");
-
-        _db.AppUsers.Remove(existing);
-
-        await _db.SaveChangesAsync();
+        return await _db.AppUsers
+            .Where(u =>
+                u.Fullname.Contains(searchTerm, compType) ||
+                u.UserName!.Contains(searchTerm, compType))
+            .ToListAsync();
     }
 }

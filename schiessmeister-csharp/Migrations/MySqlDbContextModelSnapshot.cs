@@ -22,6 +22,21 @@ namespace schiessmeister_csharp.Migrations
 
             MySqlModelBuilderExtensions.AutoIncrementColumns(modelBuilder);
 
+            modelBuilder.Entity("AppUserCompetition", b =>
+                {
+                    b.Property<int>("RecordedCompetitionsId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("RecordersId")
+                        .HasColumnType("int");
+
+                    b.HasKey("RecordedCompetitionsId", "RecordersId");
+
+                    b.HasIndex("RecordersId");
+
+                    b.ToTable("AppUserCompetition");
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole<int>", b =>
                 {
                     b.Property<int>("Id")
@@ -165,6 +180,9 @@ namespace schiessmeister_csharp.Migrations
                     b.Property<int>("AccessFailedCount")
                         .HasColumnType("int");
 
+                    b.Property<DateOnly>("Birthdate")
+                        .HasColumnType("date");
+
                     b.Property<string>("ConcurrencyStamp")
                         .IsConcurrencyToken()
                         .HasColumnType("longtext");
@@ -175,6 +193,18 @@ namespace schiessmeister_csharp.Migrations
 
                     b.Property<bool>("EmailConfirmed")
                         .HasColumnType("tinyint(1)");
+
+                    b.Property<string>("Firstname")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Gender")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Lastname")
+                        .IsRequired()
+                        .HasColumnType("longtext");
 
                     b.Property<bool>("LockoutEnabled")
                         .HasColumnType("tinyint(1)");
@@ -229,10 +259,74 @@ namespace schiessmeister_csharp.Migrations
 
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<DateTime>("Date")
+                    b.Property<string>("AnnouncementUrl")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("AvailableClasses")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<DateTime>("EndDateTime")
                         .HasColumnType("datetime(6)");
 
                     b.Property<string>("Location")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<int>("OrganizerId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("StartDateTime")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OrganizerId");
+
+                    b.ToTable("Competitions");
+                });
+
+            modelBuilder.Entity("schiessmeister_csharp.Domain.Models.Discipline", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("CompetitionId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<int>("SeriesCount")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ShotsPerSeries")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CompetitionId");
+
+                    b.ToTable("Disciplines");
+                });
+
+            modelBuilder.Entity("schiessmeister_csharp.Domain.Models.Organization", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Email")
                         .IsRequired()
                         .HasColumnType("longtext");
 
@@ -240,14 +334,20 @@ namespace schiessmeister_csharp.Migrations
                         .IsRequired()
                         .HasColumnType("longtext");
 
-                    b.Property<int>("OrganizerId")
+                    b.Property<int>("OwnerId")
                         .HasColumnType("int");
+
+                    b.Property<string>("PhoneNumber")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Website")
+                        .HasColumnType("longtext");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("OrganizerId");
+                    b.HasIndex("OwnerId");
 
-                    b.ToTable("Competitions");
+                    b.ToTable("Organizations");
                 });
 
             modelBuilder.Entity("schiessmeister_csharp.Domain.Models.Participation", b =>
@@ -258,33 +358,54 @@ namespace schiessmeister_csharp.Migrations
 
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("Class")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
                     b.Property<int>("CompetitionId")
                         .HasColumnType("int");
 
-                    b.Property<int>("OrderNb")
+                    b.Property<int>("DisciplineId")
                         .HasColumnType("int");
 
-                    b.Property<string>("Results")
+                    b.Property<string>("DqStatus")
+                        .HasColumnType("longtext");
+
+                    b.Property<int>("ParticipationGroupId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("PositionNb")
+                        .HasColumnType("int");
+
+                    b.Property<int>("RecorderId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Result")
+                        .IsRequired()
+                        .HasColumnType("json");
+
+                    b.Property<string>("ShooterClass")
                         .IsRequired()
                         .HasColumnType("longtext");
 
                     b.Property<int>("ShooterId")
                         .HasColumnType("int");
 
+                    b.Property<string>("Team")
+                        .HasColumnType("longtext");
+
                     b.HasKey("Id");
 
                     b.HasIndex("CompetitionId");
+
+                    b.HasIndex("DisciplineId");
+
+                    b.HasIndex("ParticipationGroupId");
+
+                    b.HasIndex("RecorderId");
 
                     b.HasIndex("ShooterId");
 
                     b.ToTable("Participations");
                 });
 
-            modelBuilder.Entity("schiessmeister_csharp.Domain.Models.Shooter", b =>
+            modelBuilder.Entity("schiessmeister_csharp.Domain.Models.ParticipationGroup", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -292,13 +413,44 @@ namespace schiessmeister_csharp.Migrations
 
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("Name")
+                    b.Property<int>("CompetitionId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("EndDateTime")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<int?>("ParentGroupId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("StartDateTime")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("Title")
                         .IsRequired()
                         .HasColumnType("longtext");
 
                     b.HasKey("Id");
 
-                    b.ToTable("Shooters");
+                    b.HasIndex("CompetitionId");
+
+                    b.HasIndex("ParentGroupId");
+
+                    b.ToTable("ParticipationGroups");
+                });
+
+            modelBuilder.Entity("AppUserCompetition", b =>
+                {
+                    b.HasOne("schiessmeister_csharp.Domain.Models.Competition", null)
+                        .WithMany()
+                        .HasForeignKey("RecordedCompetitionsId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("schiessmeister_csharp.Domain.Models.AppUser", null)
+                        .WithMany()
+                        .HasForeignKey("RecordersId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<int>", b =>
@@ -354,13 +506,35 @@ namespace schiessmeister_csharp.Migrations
 
             modelBuilder.Entity("schiessmeister_csharp.Domain.Models.Competition", b =>
                 {
-                    b.HasOne("schiessmeister_csharp.Domain.Models.AppUser", "Organizer")
+                    b.HasOne("schiessmeister_csharp.Domain.Models.Organization", "Organizer")
                         .WithMany("Competitions")
                         .HasForeignKey("OrganizerId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Organizer");
+                });
+
+            modelBuilder.Entity("schiessmeister_csharp.Domain.Models.Discipline", b =>
+                {
+                    b.HasOne("schiessmeister_csharp.Domain.Models.Competition", "Competition")
+                        .WithMany("Disciplines")
+                        .HasForeignKey("CompetitionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Competition");
+                });
+
+            modelBuilder.Entity("schiessmeister_csharp.Domain.Models.Organization", b =>
+                {
+                    b.HasOne("schiessmeister_csharp.Domain.Models.AppUser", "Owner")
+                        .WithMany("OwnedOrganizations")
+                        .HasForeignKey("OwnerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Owner");
                 });
 
             modelBuilder.Entity("schiessmeister_csharp.Domain.Models.Participation", b =>
@@ -371,7 +545,25 @@ namespace schiessmeister_csharp.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("schiessmeister_csharp.Domain.Models.Shooter", "Shooter")
+                    b.HasOne("schiessmeister_csharp.Domain.Models.Discipline", "Discipline")
+                        .WithMany("Participations")
+                        .HasForeignKey("DisciplineId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("schiessmeister_csharp.Domain.Models.ParticipationGroup", "ParticipationGroup")
+                        .WithMany("Participations")
+                        .HasForeignKey("ParticipationGroupId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("schiessmeister_csharp.Domain.Models.AppUser", "Recorder")
+                        .WithMany("RecordedParticipations")
+                        .HasForeignKey("RecorderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("schiessmeister_csharp.Domain.Models.AppUser", "Shooter")
                         .WithMany("Participations")
                         .HasForeignKey("ShooterId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -379,22 +571,65 @@ namespace schiessmeister_csharp.Migrations
 
                     b.Navigation("Competition");
 
+                    b.Navigation("Discipline");
+
+                    b.Navigation("ParticipationGroup");
+
+                    b.Navigation("Recorder");
+
                     b.Navigation("Shooter");
+                });
+
+            modelBuilder.Entity("schiessmeister_csharp.Domain.Models.ParticipationGroup", b =>
+                {
+                    b.HasOne("schiessmeister_csharp.Domain.Models.Competition", "Competition")
+                        .WithMany("Groups")
+                        .HasForeignKey("CompetitionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("schiessmeister_csharp.Domain.Models.ParticipationGroup", "ParentGroup")
+                        .WithMany("SubGroups")
+                        .HasForeignKey("ParentGroupId");
+
+                    b.Navigation("Competition");
+
+                    b.Navigation("ParentGroup");
                 });
 
             modelBuilder.Entity("schiessmeister_csharp.Domain.Models.AppUser", b =>
                 {
-                    b.Navigation("Competitions");
+                    b.Navigation("OwnedOrganizations");
+
+                    b.Navigation("Participations");
+
+                    b.Navigation("RecordedParticipations");
                 });
 
             modelBuilder.Entity("schiessmeister_csharp.Domain.Models.Competition", b =>
                 {
+                    b.Navigation("Disciplines");
+
+                    b.Navigation("Groups");
+
                     b.Navigation("Participations");
                 });
 
-            modelBuilder.Entity("schiessmeister_csharp.Domain.Models.Shooter", b =>
+            modelBuilder.Entity("schiessmeister_csharp.Domain.Models.Discipline", b =>
                 {
                     b.Navigation("Participations");
+                });
+
+            modelBuilder.Entity("schiessmeister_csharp.Domain.Models.Organization", b =>
+                {
+                    b.Navigation("Competitions");
+                });
+
+            modelBuilder.Entity("schiessmeister_csharp.Domain.Models.ParticipationGroup", b =>
+                {
+                    b.Navigation("Participations");
+
+                    b.Navigation("SubGroups");
                 });
 #pragma warning restore 612, 618
         }

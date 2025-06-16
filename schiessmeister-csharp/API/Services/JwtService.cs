@@ -5,6 +5,7 @@ using System.Security.Claims;
 using System.Text;
 using schiessmeister_csharp.Domain.Models.Auth;
 using schiessmeister_csharp.Domain.Models;
+using schiessmeister_csharp.Domain.Services;
 
 namespace schiessmeister_csharp.API.Services;
 

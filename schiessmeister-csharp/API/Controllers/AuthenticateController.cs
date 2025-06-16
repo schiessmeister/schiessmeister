@@ -1,13 +1,13 @@
-using schiessmeister_csharp.API.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using schiessmeister_csharp.Domain.Models.Auth;
 using schiessmeister_csharp.Domain.Models;
+using schiessmeister_csharp.Domain.Services;
 
 namespace schiessmeister_csharp.API.Controllers;
 
-[Route("api/authenticate")]
 [ApiController]
+[Route("api/authenticate")]
 public class AuthenticateController : ControllerBase {
     private readonly UserManager<AppUser> userManager;
     private readonly ITokenService tokenService;
@@ -17,8 +17,7 @@ public class AuthenticateController : ControllerBase {
         this.tokenService = tokenService;
     }
 
-    [HttpPost]
-    [Route("login")]
+    [HttpPost("login")]
     public async Task<ActionResult<TokenDTO>> Login([FromBody] LoginDTO model) {
         var user = await userManager.FindByNameAsync(model.Username);
 
@@ -29,8 +28,7 @@ public class AuthenticateController : ControllerBase {
         return Unauthorized();
     }
 
-    [HttpPost]
-    [Route("register")]
+    [HttpPost("register")]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Register([FromBody] RegisterDTO model) {
         var userExists = await userManager.FindByNameAsync(model.Username);
@@ -45,7 +43,7 @@ public class AuthenticateController : ControllerBase {
 
         IdentityResult result = await userManager.CreateAsync(user, model.Password);
 
-        if (result.Errors.Count() != 0)
+        if (result.Errors.Any())
             return BadRequest(result.Errors);
 
         foreach (var er in result.Errors) {
@@ -56,7 +54,6 @@ public class AuthenticateController : ControllerBase {
             return BadRequest("User creation failed! Please check user details and try again.");
 
         await userManager.AddToRoleAsync(user, "User");
-        await userManager.AddToRoleAsync(user, "Organizer");
 
         return Ok("User created successfully!");
     }

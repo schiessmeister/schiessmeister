@@ -9,10 +9,9 @@ public class SeedDB {
         var context = serviceProvider.GetRequiredService<MySqlDbContext>();
         var roleManager = serviceProvider.GetRequiredService<RoleManager<IdentityRole<int>>>();
 
-        string[] roles = {
-            "User",
-            "Organizer"
-        };
+        string[] roles = [
+            "User"
+        ];
 
         foreach (string role in roles) {
             if (!context.Roles.Any(r => r.Name == role)) {
