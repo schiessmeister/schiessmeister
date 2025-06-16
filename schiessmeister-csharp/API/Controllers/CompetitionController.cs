@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using schiessmeister_csharp.API.Extensions;
 using schiessmeister_csharp.Domain.Models;
 using schiessmeister_csharp.Domain.Repositories;
+using schiessmeister_csharp.Domain.Services;
 
 namespace schiessmeister_csharp.API.Controllers;
 
@@ -12,11 +13,18 @@ public class CompetitionController : ControllerBase {
     private readonly ICompetitionRepository _competitions;
     private readonly IParticipationGroupRepository _participationGroups;
     private readonly IDisciplineRepository _disciplines;
+    private readonly ILeaderboardService _leaderboardService;
 
-    public CompetitionController(ICompetitionRepository competitions, IParticipationGroupRepository participationGroups, IDisciplineRepository disciplines) {
+    public CompetitionController(
+        ICompetitionRepository competitions,
+        IParticipationGroupRepository participationGroups,
+        IDisciplineRepository disciplines,
+        ILeaderboardService leaderboardService
+    ) {
         _competitions = competitions;
         _participationGroups = participationGroups;
         _disciplines = disciplines;
+        _leaderboardService = leaderboardService;
     }
 
     [HttpGet("{id}")]
@@ -145,66 +153,15 @@ public class CompetitionController : ControllerBase {
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<List<Leaderboard>>> GetLeaderboards(int id) {
-        var comp = await _competitions.FindByIdWithFullParticipationsAsync(id);
+        var leaderboards = await _leaderboardService.GetLeaderboardsAsync(id);
 
-        if (comp == null)
+        if (leaderboards.Count == 0)
             return NotFound();
-
-        List<Leaderboard> leaderboards = [];
-
-        var participationsByDiscipline = comp.Participations
-            .GroupBy(p => p.DisciplineId)
-            .ToDictionary(g => g.Key, g => g.ToList());
-
-        foreach (var discipline in comp.Disciplines) {
-            if (!participationsByDiscipline.TryGetValue(discipline.Id, out var disciplineParticipations))
-                continue;
-
-            // Class-based leaderboards
-            foreach (var shootingClass in comp.AvailableClasses) {
-                var classLeaderboard = new Leaderboard($"{discipline.Name} - {shootingClass}");
-
-                var classParticipations = disciplineParticipations
-                    .Where(p => p.ShooterClass == shootingClass)
-                    .OrderByDescending(p => p.Result?.TotalPoints)
-                    .ToArray();
-
-                foreach (var participation in classParticipations) {
-                    classLeaderboard.Entries.Add(new LeaderboardShooterEntry {
-                        Name = participation.Shooter!.Fullname,
-                        ShooterClass = participation.ShooterClass,
-                        Team = participation.Team,
-                        DqStatus = participation.DqStatus,
-                        TotalScore = participation.Result.TotalPoints
-                    });
-                }
-
-                leaderboards.Add(classLeaderboard);
-            }
-
-            // Team-based leaderboard for the discipline
-            var teamLeaderboard = new Leaderboard($"{discipline.Name} - Mannschaften");
-
-            foreach (var team in comp.Teams) {
-                var teamScores = disciplineParticipations
-                    .Where(p => p.Team == team)
-                    .Select(p => p.Result?.TotalPoints ?? 0)
-                    .ToArray();
-
-                teamLeaderboard.Entries.Add(new LeaderboardTeamEntry {
-                    Name = team,
-                    ShooterTotals = teamScores,
-                    TotalScore = teamScores.Sum()
-                });
-            }
-
-            leaderboards.Add(teamLeaderboard);
-        }
 
         return Ok(leaderboards);
     }
 
-    [HttpGet("{id}/subscribe")]
+    [HttpGet("{id}/leaderboards/subscribe")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult> GetSubscriptionInfo(int id) {
@@ -218,7 +175,7 @@ public class CompetitionController : ControllerBase {
             hubUrl = "/hubs/competition",
             competitionId = id,
             methodName = "SubscribeToCompetition",
-            eventName = "CompetitionUpdated"
+            eventName = "LeaderboardUpdated"
         });
     }
 }

@@ -108,6 +108,7 @@ public class Program {
         builder.Services.AddScoped<IAppUserRepository, MySqlAppUserRepository>();
         builder.Services.AddScoped<ICompetitionRepository, MySqlCompetitionRepository>();
         builder.Services.AddScoped<ICompetitionNotificationService, CompetitionNotificationService>();
+        builder.Services.AddScoped<ILeaderboardService, LeaderboardService>();
 
         builder.Services.AddSignalR(options => {
             options.EnableDetailedErrors = true;
