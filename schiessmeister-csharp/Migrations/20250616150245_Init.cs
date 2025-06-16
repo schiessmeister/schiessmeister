@@ -286,6 +286,8 @@ namespace schiessmeister_csharp.Migrations
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
+                    Name = table.Column<string>(type: "longtext", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
                     SeriesCount = table.Column<int>(type: "int", nullable: false),
                     ShotsPerSeries = table.Column<int>(type: "int", nullable: false),
                     CompetitionId = table.Column<int>(type: "int", nullable: false)
@@ -312,7 +314,7 @@ namespace schiessmeister_csharp.Migrations
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     StartDateTime = table.Column<DateTime>(type: "datetime(6)", nullable: true),
                     EndDateTime = table.Column<DateTime>(type: "datetime(6)", nullable: true),
-                    CompetitionId = table.Column<int>(type: "int", nullable: true),
+                    CompetitionId = table.Column<int>(type: "int", nullable: false),
                     ParentGroupId = table.Column<int>(type: "int", nullable: true)
                 },
                 constraints: table =>
@@ -322,7 +324,8 @@ namespace schiessmeister_csharp.Migrations
                         name: "FK_ParticipationGroups_Competitions_CompetitionId",
                         column: x => x.CompetitionId,
                         principalTable: "Competitions",
-                        principalColumn: "Id");
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
                         name: "FK_ParticipationGroups_ParticipationGroups_ParentGroupId",
                         column: x => x.ParentGroupId,
@@ -340,7 +343,7 @@ namespace schiessmeister_csharp.Migrations
                     ShooterClass = table.Column<string>(type: "longtext", nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     PositionNb = table.Column<int>(type: "int", nullable: false),
-                    Result = table.Column<string>(type: "json", nullable: true)
+                    Result = table.Column<string>(type: "json", nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     Team = table.Column<string>(type: "longtext", nullable: true)
                         .Annotation("MySql:CharSet", "utf8mb4"),
@@ -350,7 +353,7 @@ namespace schiessmeister_csharp.Migrations
                     ShooterId = table.Column<int>(type: "int", nullable: false),
                     RecorderId = table.Column<int>(type: "int", nullable: false),
                     CompetitionId = table.Column<int>(type: "int", nullable: false),
-                    ParticipationGroupId = table.Column<int>(type: "int", nullable: true)
+                    ParticipationGroupId = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -383,7 +386,8 @@ namespace schiessmeister_csharp.Migrations
                         name: "FK_Participations_ParticipationGroups_ParticipationGroupId",
                         column: x => x.ParticipationGroupId,
                         principalTable: "ParticipationGroups",
-                        principalColumn: "Id");
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 })
                 .Annotation("MySql:CharSet", "utf8mb4");
 

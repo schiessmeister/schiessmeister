@@ -12,7 +12,7 @@ using schiessmeister_csharp.Infrastructure.MySqlRepositories;
 namespace schiessmeister_csharp.Migrations
 {
     [DbContext(typeof(MySqlDbContext))]
-    [Migration("20250510120115_Init")]
+    [Migration("20250616150245_Init")]
     partial class Init
     {
         /// <inheritdoc />
@@ -304,6 +304,10 @@ namespace schiessmeister_csharp.Migrations
                     b.Property<int>("CompetitionId")
                         .HasColumnType("int");
 
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
                     b.Property<int>("SeriesCount")
                         .HasColumnType("int");
 
@@ -366,7 +370,7 @@ namespace schiessmeister_csharp.Migrations
                     b.Property<string>("DqStatus")
                         .HasColumnType("longtext");
 
-                    b.Property<int?>("ParticipationGroupId")
+                    b.Property<int>("ParticipationGroupId")
                         .HasColumnType("int");
 
                     b.Property<int>("PositionNb")
@@ -376,6 +380,7 @@ namespace schiessmeister_csharp.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("Result")
+                        .IsRequired()
                         .HasColumnType("json");
 
                     b.Property<string>("ShooterClass")
@@ -411,7 +416,7 @@ namespace schiessmeister_csharp.Migrations
 
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int?>("CompetitionId")
+                    b.Property<int>("CompetitionId")
                         .HasColumnType("int");
 
                     b.Property<DateTime?>("EndDateTime")
@@ -551,7 +556,9 @@ namespace schiessmeister_csharp.Migrations
 
                     b.HasOne("schiessmeister_csharp.Domain.Models.ParticipationGroup", "ParticipationGroup")
                         .WithMany("Participations")
-                        .HasForeignKey("ParticipationGroupId");
+                        .HasForeignKey("ParticipationGroupId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.HasOne("schiessmeister_csharp.Domain.Models.AppUser", "Recorder")
                         .WithMany("RecordedParticipations")
@@ -580,7 +587,9 @@ namespace schiessmeister_csharp.Migrations
                 {
                     b.HasOne("schiessmeister_csharp.Domain.Models.Competition", "Competition")
                         .WithMany("Groups")
-                        .HasForeignKey("CompetitionId");
+                        .HasForeignKey("CompetitionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.HasOne("schiessmeister_csharp.Domain.Models.ParticipationGroup", "ParentGroup")
                         .WithMany("SubGroups")
