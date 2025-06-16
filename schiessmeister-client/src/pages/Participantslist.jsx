@@ -3,6 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { getCompetition, getShooters, createShooter, updateCompetition } from '../api/apiClient';
 import '../styles/Participantslist.css';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 
 const ParticipantsList = () => {
 	const { id } = useParams();
@@ -145,19 +147,19 @@ const ParticipantsList = () => {
 						<div className="controls">
 							<ul>
 								<li>
-									<button className="button button--tertiary" onClick={() => handleMoveParticipant(participation.id, 'up')} disabled={participation.orderNb === 1}>
-										Nach oben
-									</button>
+                                                                        <Button variant="outline" onClick={() => handleMoveParticipant(participation.id, 'up')} disabled={participation.orderNb === 1}>
+                                                                               Nach oben
+                                                                        </Button>
 								</li>
 								<li>
-									<button className="button button--tertiary" onClick={() => handleMoveParticipant(participation.id, 'down')} disabled={participation.orderNb === getMaxOrderNb()}>
-										Nach unten
-									</button>
+                                                                        <Button variant="outline" onClick={() => handleMoveParticipant(participation.id, 'down')} disabled={participation.orderNb === getMaxOrderNb()}>
+                                                                               Nach unten
+                                                                        </Button>
 								</li>
 								<li>
-									<button className="button button--tertiary" onClick={() => handleRemoveParticipant(participation.id)}>
-										Löschen
-									</button>
+                                                                        <Button variant="outline" onClick={() => handleRemoveParticipant(participation.id)}>
+                                                                               Löschen
+                                                                        </Button>
 								</li>
 							</ul>
 						</div>
@@ -172,11 +174,11 @@ const ParticipantsList = () => {
 			<div className="participant-list">
 				<h3>Schützen</h3>
 
-				{availableShooters.map((shooter) => (
-					<button key={shooter.id} className="button participant-button" onClick={() => handleAddParticipant(shooter.id)}>
-						{shooter.name}
-					</button>
-				))}
+                                {availableShooters.map((shooter) => (
+                                        <Button key={shooter.id} className="participant-button" onClick={() => handleAddParticipant(shooter.id)}>
+                                                {shooter.name}
+                                        </Button>
+                                ))}
 			</div>
 
 			<hr />
@@ -184,15 +186,15 @@ const ParticipantsList = () => {
 			<div className="actions">
 				<h3>Neuer Schütze</h3>
 
-				<input type="text" placeholder="Neuer Teilnehmer" value={newShooterName} onChange={(e) => setNewShooterName(e.target.value)} />
+                                <Input type="text" placeholder="Neuer Teilnehmer" value={newShooterName} onChange={(e) => setNewShooterName(e.target.value)} />
 
 				<div className="buttons">
-					<button className="button button--tertiary add-shooter-btn" onClick={handleCreateShooter}>
-						+ Teilnehmer erstellen
-					</button>
-					<button className="button back-btn" onClick={() => navigate(`/competition/${id}`)}>
-						Zurück
-					</button>
+                                        <Button variant="outline" className="add-shooter-btn" onClick={handleCreateShooter}>
+                                                + Teilnehmer erstellen
+                                        </Button>
+                                        <Button className="back-btn" onClick={() => navigate(`/manager/competitions/${id}`)}>
+                                                Zurück
+                                        </Button>
 				</div>
 			</div>
 		</main>

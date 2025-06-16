@@ -5,7 +5,8 @@ import * as signalR from '@microsoft/signalr';
 import JSConfetti from 'js-confetti';
 import { SHOOTING_CLASSES } from '../constants/shootingClasses';
 import '../styles/PublicLeaderboard.css';
-import { API_BASE_URL, BASE_URL } from '../utils/api';
+import { BASE_URL } from '../utils/api';
+import { getSubscriptionDetails } from '../api/authService';
 
 const LeaderboardGrid = ({ participations }) => {
 	return (
@@ -48,11 +49,10 @@ const PublicLeaderboard = () => {
 	};
 
 	useEffect(() => {
-		const setupSignalR = async () => {
-			try {
-				// First, get the subscription details
-				const response = await fetch(API_BASE_URL + `/competition/${id}/subscribe`);
-				const subscriptionDetails = await response.json();
+               const setupSignalR = async () => {
+                        try {
+                                // First, get the subscription details
+                                const subscriptionDetails = await getSubscriptionDetails(id);
 
 				// Create SignalR connection
 				connectionRef.current = new signalR.HubConnectionBuilder()

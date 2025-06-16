@@ -3,13 +3,15 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { getCompetition, deleteCompetition } from '../api/apiClient';
 import { useAuth } from '../context/AuthContext';
 import '../styles/CompetitionOverview.css';
+import { Button } from '@/components/ui/button';
 
 const CompetitionOverview = () => {
 	const { id } = useParams();
 	const navigate = useNavigate();
 	const [competition, setCompetition] = useState(null);
 	const [error, setError] = useState(null);
-	const auth = useAuth();
+        const auth = useAuth();
+        const basePath = auth.role === 'manager' ? '/manager' : '/writer';
 
 	const parseResults = (participation) => {
 		let results = JSON.parse(participation.results || '[]');
@@ -61,9 +63,9 @@ const CompetitionOverview = () => {
 				{participants.map((participation) => (
 					<div key={participation.id} className="participant-item">
 						<span className="participant-name">{participation.shooter.name}</span>
-						<button className="button button--tertiary results-btn" onClick={() => navigate(`/results/${id}/${participation.id}`)}>
-							Ergebnisse
-						</button>
+                                                <Button variant="outline" onClick={() => navigate(`${basePath}/results/${id}/${participation.id}`)}>
+                                                        Ergebnisse
+                                                </Button>
 					</div>
 				))}
 				{participants.length === 0 && <p>Keine {title}.</p>}
@@ -85,22 +87,26 @@ const CompetitionOverview = () => {
 					<strong>Teilnehmer:</strong> {competition.participations.length}
 				</p>
 			</div>
-			<button className="button button--secondary" onClick={() => window.open(`/public-leaderboard/${id}`, '_blank')}>
-				Live Rangliste
-			</button>
-			<ParticipantList participants={nextParticipants} title="Nächste Teilnehmer" />
-			<ParticipantList participants={completedParticipants} title="Abgeschlossene Teilnehmer" />
-			<button className="button" onClick={() => navigate(`/participantsList/${id}`)}>
-				Teilnehmer verwalten
-			</button>
-			<div className="competition-actions">
-				<button className="button button--secondary" onClick={() => navigate(`/`)}>
-					Zurück
-				</button>
-				<button className="button button--secondary delete-button" onClick={handleDeleteCompetition}>
-					Wettbewerb löschen
-				</button>
-			</div>
+                        <Button variant="secondary" onClick={() => window.open(`/public-leaderboard/${id}`, '_blank')}>
+                                Live Rangliste
+                        </Button>
+                        <ParticipantList participants={nextParticipants} title="Nächste Teilnehmer" />
+                        <ParticipantList participants={completedParticipants} title="Abgeschlossene Teilnehmer" />
+                        {auth.role === 'manager' && (
+                                <Button onClick={() => navigate(`${basePath}/participantsList/${id}`)}>
+                                        Teilnehmer verwalten
+                                </Button>
+                        )}
+                        <div className="competition-actions">
+                                <Button variant="secondary" onClick={() => navigate(`${basePath}/competitions`)}>
+                                        Zurück
+                                </Button>
+                                {auth.role === 'manager' && (
+                                        <Button variant="secondary" onClick={handleDeleteCompetition}>
+                                                Wettbewerb löschen
+                                        </Button>
+                                )}
+                        </div>
 		</main>
 	);
 };

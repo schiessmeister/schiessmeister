@@ -4,6 +4,10 @@ import { getCompetition, updateCompetition } from '../api/apiClient';
 import { useAuth } from '../context/AuthContext';
 import { SHOOTING_CLASSES } from '../constants/shootingClasses';
 import '../styles/ResultsInput.css';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Select } from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
 
 const ResultsInput = () => {
 	const { competitionId, participationId } = useParams();
@@ -14,6 +18,7 @@ const ResultsInput = () => {
 	const [error, setError] = useState(null);
 	const [shootingClass, setShootingClass] = useState('MEN');
 	const auth = useAuth();
+	const MAX_SERIES = 5;
 
 	useEffect(() => {
 		const fetchCompetition = async () => {
@@ -38,8 +43,14 @@ const ResultsInput = () => {
 		fetchCompetition();
 	}, [competitionId, participationId, auth]);
 
+	const handleSetStatus = (index, status) => {
+		const newResults = [...results];
+		newResults[index] = status;
+		setResults(newResults);
+	};
+
 	const handleNumberClick = (number) => {
-		if (results.length < 5) {
+		if (results.length < MAX_SERIES) {
 			setResults([...results, number]);
 		}
 	};
@@ -62,8 +73,8 @@ const ResultsInput = () => {
 				...competition,
 				participations: updatedParticipations
 			};
-			await updateCompetition(competitionId, updatedCompetition, auth);
-			navigate(`/competition/${competitionId}`);
+                        await updateCompetition(competitionId, updatedCompetition, auth);
+                        navigate(`/writer/competitions/${competitionId}`);
 		} catch (err) {
 			setError('Failed to save results');
 			console.error(err);
@@ -73,55 +84,72 @@ const ResultsInput = () => {
 	if (error) return <div className="error">{error}</div>;
 	if (!participation) return <div>Loading...</div>;
 
-	const isMaxResults = results.length >= 5;
-
 	return (
 		<main className="results-input">
 			<h2>Ergebnisse für {participation.shooter.name}</h2>
 
-			<div className="results-display">
-				{results.map((result, index) => (
-					<span key={index} className="result-number">
-						{result}
-					</span>
+			<div className="results-display" style={{ flexDirection: 'column', gap: '12px' }}>
+				{[...Array(MAX_SERIES)].map((_, index) => (
+					<div key={index} style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+						<span className="result-number">
+							{results[index] === undefined ? '_' : results[index]}
+						</span>
+						<Button
+							size="sm"
+							variant={results[index] === 'DNF' ? 'destructive' : 'outline'}
+							onClick={() => handleSetStatus(index, 'DNF')}
+						>
+							DNF
+						</Button>
+						<Button
+							size="sm"
+							variant={results[index] === 'DNQ' ? 'destructive' : 'outline'}
+							onClick={() => handleSetStatus(index, 'DNQ')}
+						>
+							DNQ
+						</Button>
+						{typeof results[index] === 'string' && (results[index] === 'DNF' || results[index] === 'DNQ') && (
+							<Button size="sm" variant="secondary" onClick={() => handleSetStatus(index, undefined)}>
+								Zurücksetzen
+							</Button>
+						)}
+					</div>
 				))}
-				{!isMaxResults && <span className="result-number result-number--empty">_</span>}
 			</div>
 
 			<div className="number-pad">
 				<div className="number-grid">
 					{[1, 2, 3, 4, 5, 6, 7, 8, 9, 0].map((num) => (
-						<button key={num} className="number-button" onClick={() => handleNumberClick(num)} disabled={isMaxResults}>
+						<Button key={num} className="number-button" onClick={() => handleNumberClick(num)} disabled={results.filter(r => r !== undefined).length >= MAX_SERIES} variant="outline">
 							{num}
-						</button>
+						</Button>
 					))}
-					<button className="number-button number-button--large" onClick={() => handleNumberClick(10)} disabled={isMaxResults}>
+					<Button className="number-button number-button--large" onClick={() => handleNumberClick(10)} disabled={results.filter(r => r !== undefined).length >= MAX_SERIES} variant="outline">
 						10
-					</button>
+					</Button>
 				</div>
-				<button className="button button--danger" onClick={handleRemoveLast} disabled={results.length === 0}>
+				<Button variant="destructive" onClick={handleRemoveLast} disabled={results.filter(r => r !== undefined).length === 0}>
 					Letzte Zahl löschen
-				</button>
-
+				</Button>
 				<div className="shooting-class-select">
-					<label htmlFor="shootingClass">Schützenklasse:</label>
-					<select id="shootingClass" value={shootingClass} onChange={(e) => setShootingClass(e.target.value)}>
+					<Label htmlFor="shootingClass">Schützenklasse:</Label>
+					<Select id="shootingClass" value={shootingClass} onChange={(e) => setShootingClass(e.target.value)}>
 						{SHOOTING_CLASSES.map(({ key, value }) => (
 							<option key={key} value={key}>
 								{value}
 							</option>
 						))}
-					</select>
+					</Select>
 				</div>
 			</div>
 
 			<div className="action-buttons">
-				<button className="button button--secondary reset-btn" onClick={() => navigate(`/competition/${competitionId}`)}>
+				<Button variant="secondary" className="reset-btn" onClick={() => navigate(`/writer/competitions/${competitionId}`)}>
 					Abbrechen
-				</button>
-				<button className="button" onClick={handleSave}>
+				</Button>
+				<Button onClick={handleSave}>
 					Speichern
-				</button>
+				</Button>
 			</div>
 		</main>
 	);
