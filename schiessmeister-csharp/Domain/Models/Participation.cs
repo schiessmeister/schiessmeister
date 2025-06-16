@@ -42,6 +42,6 @@ public class Participation : IEntity {
     public int CompetitionId { get; set; }
     public Competition? Competition { get; set; }
 
-    public int? ParticipationGroupId { get; set; }
+    public int ParticipationGroupId { get; set; }
     public ParticipationGroup? ParticipationGroup { get; set; }
 }

@@ -25,19 +25,13 @@ public class ParticipationGroupController : ControllerBase {
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<ActionResult<Competition>> UpdateParticipationGroup(int id, ParticipationGroup newGroup) {
-        var participationGroup = await _participationGroup.FindByIdWithAllParentsCompAsync(id);
+        var participationGroup = await _participationGroup.FindByIdWithOrgAsync(id);
 
         if (participationGroup == null)
             return NotFound();
 
-        if (User.GetUserId() != participationGroup.GetCompetition().Organizer!.OwnerId)
+        if (User.GetUserId() != participationGroup.Competition!.Organizer!.OwnerId)
             return Forbid();
-
-        if (newGroup.ParentGroupId == null && newGroup.CompetitionId == null)
-            return BadRequest("A participation group must either have a parent group or a competition.");
-
-        if (newGroup.ParentGroupId != null && newGroup.CompetitionId != null)
-            return BadRequest("A participation group cannot have both a parent group and a competition.");
 
         if (newGroup.SubGroups.Count > 0 && newGroup.Participations.Count > 0)
             return BadRequest("A participation group cannot have both subgrous and participations.");
@@ -52,12 +46,12 @@ public class ParticipationGroupController : ControllerBase {
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> DeleteParticipationGroup(int id, [FromQuery] bool preserveSubGroups = false) {
-        var participationGroup = await _participationGroup.FindByIdWithAllParentsChildsCompAsync(id);
+        var participationGroup = await _participationGroup.FindByIdWithChildsOrgAsync(id);
 
         if (participationGroup == null)
             return NotFound();
 
-        if (User.GetUserId() != participationGroup.GetCompetition().Organizer!.OwnerId)
+        if (User.GetUserId() != participationGroup.Competition!.Organizer!.OwnerId)
             return Forbid();
 
         if (preserveSubGroups) {
@@ -67,7 +61,6 @@ public class ParticipationGroupController : ControllerBase {
                 // Move all subGroups to the top-level (the competition)
                 foreach (var subGroup in subGroups) {
                     subGroup.ParentGroupId = null;
-                    subGroup.CompetitionId = participationGroup.CompetitionId;
                 }
             } else {
                 // Move all subGroups to the parent group
@@ -93,21 +86,19 @@ public class ParticipationGroupController : ControllerBase {
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<ActionResult<ParticipationGroup>> CreateSubGroup(int id, ParticipationGroup newSubGroup) {
-        var participationGroup = await _participationGroup.FindByIdWithAllParentsCompAsync(id);
+        var participationGroup = await _participationGroup.FindByIdWithOrgAsync(id);
 
         if (participationGroup == null)
             return NotFound();
 
-        if (User.GetUserId() != participationGroup.GetCompetition().Organizer!.OwnerId)
+        if (User.GetUserId() != participationGroup.Competition!.Organizer!.OwnerId)
             return Forbid();
-
-        if (newSubGroup.CompetitionId != null)
-            return BadRequest("A participation group cannot have both a parent group and a competition.");
 
         if (newSubGroup.SubGroups.Count > 0 && newSubGroup.Participations.Count > 0)
             return BadRequest("A participation group cannot have both subgrous and participations.");
 
         newSubGroup.ParentGroupId = id;
+        newSubGroup.CompetitionId = participationGroup.CompetitionId;
         await _participationGroup.AddAsync(newSubGroup);
 
         return CreatedAtAction(nameof(CompetitionController.GetCompetition), new { id = newSubGroup.Id }, newSubGroup);
@@ -119,23 +110,22 @@ public class ParticipationGroupController : ControllerBase {
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<ActionResult<ParticipationGroup>> CreateParticipation(int id, Participation participation) {
-        var participationGroup = await _participationGroup.FindByIdWithAllParentsCompAsync(id);
+        var participationGroup = await _participationGroup.FindByIdWithOrgAsync(id);
 
         if (participationGroup == null)
             return NotFound();
 
-        var comp = participationGroup.GetCompetition();
-
-        if (User.GetUserId() != comp.Organizer!.OwnerId)
+        if (User.GetUserId() != participationGroup.Competition!.Organizer!.OwnerId)
             return Forbid();
 
-        if (participation.Discipline?.CompetitionId != comp.Id)
+        if (participation.Discipline?.CompetitionId != participationGroup.Competition!.Id)
             return BadRequest("A participation can only have a discipline of the attended competition.");
 
         if (participation.ShooterId != participation.RecorderId)
             return BadRequest("The shooter is not allowed to record himself.");
 
         participation.ParticipationGroupId = id;
+        participation.CompetitionId = participationGroup.CompetitionId;
         await _participation.AddAsync(participation);
 
         return CreatedAtAction(nameof(CompetitionController.GetCompetition), new { id = participation.Id }, participation);

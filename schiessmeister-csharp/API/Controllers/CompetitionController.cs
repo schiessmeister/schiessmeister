@@ -25,7 +25,7 @@ public class CompetitionController : ControllerBase {
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<ActionResult<Competition>> GetCompetition(int id) {
-        var comp = await _competitions.FindByIdFullAsync(id);
+        var comp = await _competitions.FindByIdFullTreeAsync(id);
 
         if (comp == null)
             return NotFound();

@@ -8,23 +8,16 @@ public class ParticipationGroup : IEntity {
     public DateTime? StartDateTime { get; set; }
     public DateTime? EndDateTime { get; set; }
 
-    public int? CompetitionId { get; set; } // Only the top-level group can have a competition.
+    public int CompetitionId { get; set; }
     public Competition? Competition { get; set; }
 
-    public int? ParentGroupId { get; set; } // Can't have a parent group if it's a top-level group.
+    public int? ParentGroupId { get; set; } // Doesn't have a parent group if it's a top-level group.
     public ParticipationGroup? ParentGroup { get; set; }
 
     public List<ParticipationGroup> SubGroups { get; set; } = [];
 
     // Can only have participations if it's a bottom-level group. Meaning it has no sub-groups.
     public List<Participation> Participations { get; set; } = [];
-
-    public Competition GetCompetition() {
-        if (Competition != null)
-            return Competition;
-
-        return ParentGroup!.GetCompetition();
-    }
 
     public List<ParticipationGroup> GetAllSubGroups() {
         List<ParticipationGroup> subGroups = [];

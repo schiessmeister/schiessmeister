@@ -7,15 +7,15 @@ namespace schiessmeister_csharp.Infrastructure.MySqlRepositories;
 
 public class MySqlCompetitionRepository(MySqlDbContext dbContext) : MySqlRepositoryBase<Competition>(dbContext, dbContext.Competitions), ICompetitionRepository {
 
-    public async Task<Competition?> FindByIdFullAsync(int id) {
+    public async Task<Competition?> FindByIdFullTreeAsync(int id) {
         return await _db.Competitions
             .Include(c => c.Participations.OrderBy(p => p.ShooterClass).ThenBy(p => p.Shooter!.Lastname).ThenBy(p => p.Shooter!.Firstname))
             .Include(c => c.Disciplines)
             .Include(c => c.Recorders)
-            .Include(c => c.Groups)
+            .Include(c => c.Groups.Where(g => g.ParentGroupId == null)) // Only top-level groups.
             .ThenInclude(g => g.SubGroups) // This should include all subgroups recursively.
             .ThenInclude(sg => sg.Participations)
-            .Include(c => c.Groups)
+            .Include(c => c.Groups.Where(g => g.ParentGroupId == null))
             .ThenInclude(g => g.Participations)
             .FirstOrDefaultAsync(c => c.Id == id);
     }

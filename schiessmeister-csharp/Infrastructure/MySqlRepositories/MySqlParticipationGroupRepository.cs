@@ -6,17 +6,17 @@ namespace schiessmeister_csharp.Infrastructure.MySqlRepositories;
 
 public class ParticipationGroupRepository(MySqlDbContext dbContext) : MySqlRepositoryBase<ParticipationGroup>(dbContext, dbContext.ParticipationGroups), IParticipationGroupRepository {
 
-    public async Task<ParticipationGroup?> FindByIdWithAllParentsCompAsync(int id) {
+    public async Task<ParticipationGroup?> FindByIdWithOrgAsync(int id) {
         return await _db.ParticipationGroups
-            .Include(pg => pg.ParentGroup)
-            .ThenInclude(pg => pg!.Competition) // TODO Check if this works
+            .Include(pg => pg.Competition)
+            .ThenInclude(c => c!.Organizer)
             .FirstOrDefaultAsync(pg => pg.Id == id);
     }
 
-    public async Task<ParticipationGroup?> FindByIdWithAllParentsChildsCompAsync(int id) {
+    public async Task<ParticipationGroup?> FindByIdWithChildsOrgAsync(int id) {
         return await _db.ParticipationGroups
-            .Include(pg => pg.ParentGroup)
-            .ThenInclude(pg => pg!.Competition)
+            .Include(pg => pg.Competition)
+            .ThenInclude(c => c.Organizer)
             .Include(pg => pg.SubGroups)
             .FirstOrDefaultAsync(pg => pg.Id == id);
     }
