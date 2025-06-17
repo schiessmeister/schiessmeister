@@ -10,9 +10,9 @@ export const loginRequest = async (email, password, role) => {
     });
 };
 
-export const registerRequest = async (username, email, password) => {
+export const registerRequest = async (username, firstname, lastname, email, password, gender) => {
     const api = createApi();
-    return api.post('/authenticate/register', { username, email, password });
+    return api.post('/authenticate/register', { username, firstname, lastname, email, password, gender });
 };
 
 export const getSubscriptionDetails = async (competitionId) => {
