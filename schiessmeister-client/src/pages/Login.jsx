@@ -8,7 +8,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Link } from 'react-router-dom';
 
 const Login = () => {
-	const [email, setEmail] = useState('');
+        const [username, setUsername] = useState('');
 	const [password, setPassword] = useState('');
         const [error, setError] = useState('');
         const [role, setRole] = useState('manager');
@@ -20,11 +20,11 @@ const Login = () => {
 		setError('');
                 setIsLoading(true);
 
-		try {
-                        const data = await loginRequest(email, password, role);
-                        login(data.token, data.id, data.role);
-		} catch (error) {
-			setError(error.message || 'Ungültige E-Mail oder Passwort');
+                try {
+                        const data = await loginRequest(username, password);
+                        login(data.token, data.id, role);
+                } catch (error) {
+                        setError(error.message || 'Ungültiger Benutzername oder Passwort');
 			console.error('Login error:', error);
 		} finally {
                     setIsLoading(false);
@@ -40,19 +40,19 @@ const Login = () => {
 				</CardHeader>
 				<CardContent>
 					<form onSubmit={handleSubmit} className="flex flex-col gap-4">
-						<div>
-							<Input
-								id="email"
-								name="email"
-								type="email"
-								required
-								placeholder="Email"
-								value={email}
-								onChange={(e) => setEmail(e.target.value)}
-								autoComplete="email"
+                                               <div>
+                                                        <Input
+                                                                id="username"
+                                                                name="username"
+                                                                type="text"
+                                                                required
+                                                                placeholder="Benutzername"
+                                                                value={username}
+                                                                onChange={(e) => setUsername(e.target.value)}
+                                                                autoComplete="username"
                                                                 disabled={isLoading}
-							/>
-						</div>
+                                                        />
+                                                </div>
                                                <div>
                                                        <Input
                                                                id="password"

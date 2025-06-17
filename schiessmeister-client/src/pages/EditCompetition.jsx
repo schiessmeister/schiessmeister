@@ -10,8 +10,8 @@ const EditCompetition = () => {
   const competition = competitions.find((c) => c.id === parseInt(id));
   if (!competition) return <div>Wettbewerb nicht gefunden</div>;
 
-  const handleSubmit = (data) => {
-    updateCompetition(competition.id, data);
+  const handleSubmit = async (data) => {
+    await updateCompetition(competition.id, data);
     navigate(`/manager/competitions/${competition.id}`);
   };
 

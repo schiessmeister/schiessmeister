@@ -91,7 +91,7 @@ const WriterParticipantGroupView = () => {
       p.id === activeParticipation.id ? { ...p, results: resultsInput } : p
     );
     // Competition im Context aktualisieren
-    updateCompetition(competition.id, { ...competition, participations: updatedParticipations });
+    await updateCompetition(competition.id, { ...competition, participations: updatedParticipations });
     setResultDialogOpen(false);
   };
 

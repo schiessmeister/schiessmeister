@@ -97,8 +97,8 @@ const CompetitionDetail = ({ editable = true }) => {
     }
   };
 
-  const handleSaveGroups = () => {
-    updateCompetition(competition.id, { ...competition, participantGroups: groupsDraft });
+  const handleSaveGroups = async () => {
+    await updateCompetition(competition.id, { ...competition, participantGroups: groupsDraft });
     setGroupsDialogOpen(false);
   };
 

@@ -6,8 +6,8 @@ const CreateCompetition = () => {
   const { addCompetition } = useData();
   const navigate = useNavigate();
 
-  const handleSubmit = (data) => {
-    addCompetition(data);
+  const handleSubmit = async (data) => {
+    await addCompetition(data);
     navigate('/manager/competitions');
   };
 

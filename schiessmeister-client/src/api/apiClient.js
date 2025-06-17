@@ -1,54 +1,51 @@
 import { createApi } from '../utils/api';
 
-export const getCompetitions = async (auth) => {
-	if (!auth.userId) throw new Error('User not authenticated');
+export const getOwnedOrganizations = async (auth) => {
+  if (!auth.userId) throw new Error('User not authenticated');
+  const api = createApi(auth.token, auth.handleUnauthorized);
+  return api.get(`/users/${auth.userId}/owned-organizations`);
+};
 
-	const api = createApi(auth.token, auth.handleUnauthorized);
-	return api.get(`/users/${auth.userId}/competitions`);
+export const getCompetitions = async (auth) => {
+  const api = createApi(auth.token, auth.handleUnauthorized);
+  const orgs = await getOwnedOrganizations(auth);
+  let comps = [];
+  for (const org of orgs) {
+    const c = await api.get(`/organizations/${org.id}/competitions`);
+    comps = comps.concat(c);
+  }
+  return comps;
+};
+
+export const createCompetition = async (organizationId, competitionData, auth) => {
+  const api = createApi(auth.token, auth.handleUnauthorized);
+  return api.post(`/organizations/${organizationId}/competitions`, competitionData);
 };
 
 export const getCompetition = async (id, auth = null) => {
-	if (auth) {
-		const api = createApi(auth.token, auth.handleUnauthorized);
-		return api.get(`/competition/${id}`);
-	}
-	// For public access without auth
-	const api = createApi();
-	return api.get(`/competition/${id}`);
+  if (auth) {
+    const api = createApi(auth.token, auth.handleUnauthorized);
+    return api.get(`/competitions/${id}`);
+  }
+  const api = createApi();
+  return api.get(`/competitions/${id}`);
 };
 
 export const updateCompetition = async (id, competitionData, auth) => {
-	const api = createApi(auth.token, auth.handleUnauthorized);
-
-	competitionData = {
-		...competitionData,
-		participations: competitionData.participations.map((p) => ({
-			class: p.class,
-			results: p.results,
-			orderNb: p.orderNb,
-			shooterId: p.shooterId
-		}))
-	};
-
-	return api.put(`/competition/${id}`, competitionData);
-};
-
-export const getShooters = async (auth) => {
-	const api = createApi(auth.token, auth.handleUnauthorized);
-	return api.get('/shooter');
-};
-
-export const createShooter = async (name, auth) => {
-	const api = createApi(auth.token, auth.handleUnauthorized);
-	return api.post('/shooter', { name });
-};
-
-export const deleteUser = async (userId, auth) => {
-	const api = createApi(auth.token, auth.handleUnauthorized);
-	return api.delete(`/users/${userId}`);
+  const api = createApi(auth.token, auth.handleUnauthorized);
+  competitionData = {
+    ...competitionData,
+    participations: competitionData.participations.map((p) => ({
+      class: p.class,
+      results: p.results,
+      orderNb: p.orderNb,
+      shooterId: p.shooterId,
+    })),
+  };
+  return api.put(`/competitions/${id}`, competitionData);
 };
 
 export const deleteCompetition = async (id, auth) => {
-	const api = createApi(auth.token, auth.handleUnauthorized);
-	return api.delete(`/competition/${id}`);
+  const api = createApi(auth.token, auth.handleUnauthorized);
+  return api.delete(`/competitions/${id}`);
 };
