@@ -38,7 +38,10 @@ public class AuthenticateController : ControllerBase {
         AppUser user = new AppUser() {
             Email = model.Email,
             SecurityStamp = Guid.NewGuid().ToString(),
-            UserName = model.Username
+            UserName = model.Username,
+            Firstname = model.Firstname,
+            Lastname = model.Lastname,
+            Gender = model.Gender
         };
 
         IdentityResult result = await userManager.CreateAsync(user, model.Password);
