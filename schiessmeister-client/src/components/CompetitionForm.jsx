@@ -15,8 +15,9 @@ import {
   SheetFooter,
   SheetClose,
 } from '@/components/ui/sheet';
+import { de } from 'date-fns/locale';
 
-const FIXED_WRITERS = ['Schreiber 1', 'Schreiber 2', 'Schreiber 3'];
+const FIXED_WRITERS = ['Timon Stadelmann', 'Thomas Bischof', 'Luca Nigsch'];
 
 const CompetitionForm = ({ initialValues, onSubmit, submitLabel, onCancel }) => {
   const [name, setName] = useState(initialValues.name || '');
@@ -24,8 +25,8 @@ const CompetitionForm = ({ initialValues, onSubmit, submitLabel, onCancel }) => 
     initialValues.date ? new Date(initialValues.date) : undefined
   );
   const [klassen, setKlassen] = useState(initialValues.klassen || []);
-  const [schreiber, setSchreiber] = useState(initialValues.schreiber || []);
-  const [disziplinen, setDisziplinen] = useState(initialValues.disziplinen || []);
+  const [writers, setSchreiber] = useState(initialValues.writers || []);
+  const [disciplines, setDisziplinen] = useState(initialValues.disciplines || []);
 
   const [sheetKlasseOpen, setSheetKlasseOpen] = useState(false);
   const [sheetSchreiberOpen, setSheetSchreiberOpen] = useState(false);
@@ -48,7 +49,7 @@ const CompetitionForm = ({ initialValues, onSubmit, submitLabel, onCancel }) => 
     } else {
       setErrorKlassen('');
     }
-    if (disziplinen.length === 0) {
+    if (disciplines.length === 0) {
       setErrorDisziplinen('Mindestens eine Disziplin ist erforderlich.');
       valid = false;
     } else {
@@ -59,14 +60,14 @@ const CompetitionForm = ({ initialValues, onSubmit, submitLabel, onCancel }) => 
       name,
       date: date ? date.toISOString() : '',
       klassen,
-      schreiber,
-      disziplinen,
+      writers,
+      disciplines,
     });
   };
 
   return (
     <form onSubmit={handleSubmit} className="max-w-4xl mx-auto mt-8 flex flex-col gap-8">
-      <h2 className="text-3xl font-bold mb-6">Neuen Wettbewerb erstellen</h2>
+      <h2 className="text-3xl font-bold mb-6"></h2>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         <div className="flex flex-col gap-6">
           <div>
@@ -83,7 +84,7 @@ const CompetitionForm = ({ initialValues, onSubmit, submitLabel, onCancel }) => 
                   type="button"
                 >
                   <CalendarIcon className="mr-2 h-4 w-4" />
-                  {date ? format(date, 'PPP') : 'Datum wählen'}
+                  {date ? format(date, 'dd. MMMM yyyy',{ locale: de }) : 'Datum wählen'}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0">
@@ -129,19 +130,19 @@ const CompetitionForm = ({ initialValues, onSubmit, submitLabel, onCancel }) => 
             </Sheet>
           </div>
           <div>
-            <WriterMultiCombobox options={FIXED_WRITERS} value={schreiber} onChange={setSchreiber} label="Schreiber" />
+            <WriterMultiCombobox options={FIXED_WRITERS} value={writers} onChange={setSchreiber} label="Schreiber" />
           </div>
         </div>
         <div className="flex flex-col gap-6">
           <div>
             <label className="block font-medium mb-1">Disziplin</label>
             <ul className="mb-2">
-              {disziplinen.map((d, i) => (
+              {disciplines.map((d, i) => (
                 <li key={i} className="flex items-center gap-2 mb-1">
                   <span>
-                    {d.name} (Serien: {d.serien}, Schüsse: {d.schuesse})
+                    {d.name} (Serien: {d.seriesCount}, Schüsse: {d.seriesShots})
                   </span>
-                  <Button type="button" size="icon" variant="ghost" onClick={() => setDisziplinen(disziplinen.filter((_, idx) => idx !== i))}>
+                  <Button type="button" size="icon" variant="ghost" onClick={() => setDisziplinen(disciplines.filter((_, idx) => idx !== i))}>
                     🗑️
                   </Button>
                 </li>
@@ -178,7 +179,7 @@ const CompetitionForm = ({ initialValues, onSubmit, submitLabel, onCancel }) => 
                       </div>
                     </div>
                   </div>
-                  <Button type="button" onClick={() => { if (newDisziplin) { setDisziplinen([...disziplinen, { name: newDisziplin, serien: newDisziplinSerien, schuesse: newDisziplinSchuesse }]); setNewDisziplin(''); setNewDisziplinSerien(1); setNewDisziplinSchuesse(1); setSheetDisziplinOpen(false); setErrorKlassen(klassen.length + 1 > 0 ? '' : errorKlassen); } }}>
+                  <Button type="button" onClick={() => { if (newDisziplin) { setDisziplinen([...disciplines, { name: newDisziplin, seriesCount: newDisziplinSerien, seriesShots: newDisziplinSchuesse }]); setNewDisziplin(''); setNewDisziplinSerien(1); setNewDisziplinSchuesse(1); setSheetDisziplinOpen(false); setErrorKlassen(klassen.length + 1 > 0 ? '' : errorKlassen); } }}>
                     Erstellen
                   </Button>
                 </div>
