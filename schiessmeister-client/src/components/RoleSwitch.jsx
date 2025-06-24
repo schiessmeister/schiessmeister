@@ -32,7 +32,7 @@ const RoleSwitch = () => {
                             {role === 'manager' ? 'Manager' : 'Writer'}
                         </span>
                         <span className="text-xs text-muted-foreground">
-                            Benutzer #{localStorage.getItem('userId')}
+                           Luca Nigsch
                         </span>
                     </div>
                 </div>

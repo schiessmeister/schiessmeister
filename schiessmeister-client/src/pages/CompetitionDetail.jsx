@@ -24,11 +24,11 @@ const KlassenList = ({ klassen, onRemove }) => (
   </div>
 );
 
-const SchreiberList = ({ schreiber, onRemove }) => (
+const SchreiberList = ({ writers, onRemove }) => (
   <div>
     <label className="block font-medium mb-1">Schreiber</label>
     <ul>
-      {schreiber.map((s, i) => (
+      {writers.map((s, i) => (
         <li key={i} className="flex items-center gap-2 mb-1">
           <span>{s}</span>
           {onRemove && <Button type="button" size="icon" variant="ghost" onClick={() => onRemove(i)}>🗑️</Button>}
@@ -38,11 +38,11 @@ const SchreiberList = ({ schreiber, onRemove }) => (
   </div>
 );
 
-const DisziplinenList = ({ disziplinen, onEdit, onRemove }) => (
+const DisziplinenList = ({ disciplines, onEdit, onRemove }) => (
   <div>
     <label className="block font-medium mb-1">Disziplin</label>
     <ul>
-      {disziplinen.map((d, i) => (
+      {disciplines.map((d, i) => (
         <li key={i} className="flex items-center gap-2 mb-1">
           <span>{d.name}</span>
           {onEdit && <Button type="button" size="icon" variant="ghost" onClick={() => onEdit(i)}>✏️</Button>}
@@ -61,49 +61,60 @@ const CompetitionDetail = ({ editable = true }) => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [newGroupName, setNewGroupName] = useState('');
   const [parentGroupId, setParentGroupId] = useState('');
-  // Für das Popup: lokale Kopie der Gruppen
-  const [groupsDraft, setGroupsDraft] = useState(competition?.participantGroups || []);
   // Sheet-State jetzt korrekt innerhalb der Komponente:
   const [editGroupSheetOpen, setEditGroupSheetOpen] = useState(false);
   const [editGroup, setEditGroup] = useState(null);
   const [editGroupName, setEditGroupName] = useState('');
 
+  // Hilfsfunktion: Gruppen aktualisieren und Competition speichern
+  const saveGroups = (newGroups) => {
+    updateCompetition(competition.id, { ...competition, participantGroups: newGroups });
+  };
+
+  // Neue Gruppe hinzufügen
   const handleAddGroup = () => {
     if (newGroupName.trim()) {
+      const allGroups = competition.participantGroups || [];
+      // Finde höchste ID (rekursiv)
+      function findMaxId(groups) {
+        return groups.reduce((max, g) => {
+          const subMax = g.subParticipationGroups ? findMaxId(g.subParticipationGroups) : 0;
+          return Math.max(max, g.id, subMax);
+        }, 0);
+      }
+      const newId = findMaxId(allGroups) + 1;
       const newGroup = {
-        id: Date.now().toString(),
+        id: newId,
         title: newGroupName,
         startDateTime: '',
         endDateTime: '',
         participations: [],
         subParticipationGroups: [],
       };
+      let newGroups;
       if (parentGroupId) {
         // Füge als Subgruppe hinzu
-        const addSubGroup = (groups) =>
-          groups.map(g =>
-            g.id === parentGroupId
+        function addSubGroup(groups) {
+          return groups.map(g =>
+            g.id === parseInt(parentGroupId)
               ? { ...g, subParticipationGroups: [...(g.subParticipationGroups || []), newGroup] }
               : { ...g, subParticipationGroups: g.subParticipationGroups ? addSubGroup(g.subParticipationGroups) : [] }
           );
-        setGroupsDraft(addSubGroup(groupsDraft));
+        }
+        newGroups = addSubGroup(allGroups);
       } else {
         // Top-Level-Gruppe
-        setGroupsDraft([...groupsDraft, newGroup]);
+        newGroups = [...allGroups, newGroup];
       }
+      saveGroups(newGroups);
       setNewGroupName('');
       setParentGroupId('');
       setDialogOpen(false);
     }
   };
 
-  const handleSaveGroups = () => {
-    updateCompetition(competition.id, { ...competition, participantGroups: groupsDraft });
-    setGroupsDialogOpen(false);
-  };
-
+  // Gruppe bearbeiten
   const handleSaveGroupEdit = () => {
-    // Update im Draft (rekursiv)
     function updateGroup(groups, id, newName) {
       return groups.map(g =>
         g.id === id
@@ -111,10 +122,12 @@ const CompetitionDetail = ({ editable = true }) => {
           : { ...g, subParticipationGroups: g.subParticipationGroups ? updateGroup(g.subParticipationGroups, id, newName) : [] }
       );
     }
-    setGroupsDraft(updateGroup(groupsDraft, editGroup.id, editGroupName));
+    const newGroups = updateGroup(competition.participantGroups || [], editGroup.id, editGroupName);
+    saveGroups(newGroups);
     setEditGroupSheetOpen(false);
   };
 
+  // Gruppe zum Bearbeiten finden
   const handleEditGroupClick = (groupId) => {
     function findGroup(groups, id) {
       for (const g of groups) {
@@ -126,7 +139,7 @@ const CompetitionDetail = ({ editable = true }) => {
       }
       return null;
     }
-    const group = findGroup(groupsDraft, groupId);
+    const group = findGroup(competition.participantGroups || [], groupId);
     if (group) {
       setEditGroup(group);
       setEditGroupName(group.title);
@@ -134,8 +147,9 @@ const CompetitionDetail = ({ editable = true }) => {
     }
   };
 
+  // TreeView-Mapping
   function mapGroupsToTree(groups) {
-    return groups.map(g => ({
+    return (groups || []).map(g => ({
       id: g.id,
       name: g.title,
       icon: g.subParticipationGroups && g.subParticipationGroups.length > 0 ? Folder : File,
@@ -148,9 +162,9 @@ const CompetitionDetail = ({ editable = true }) => {
     }));
   }
 
-  // Hilfsfunktion für alle Gruppen als Flat-Array (für Select)
+  // Flat-Array für Select
   function flattenGroups(groups, prefix = '') {
-    return groups.reduce((acc, g) => {
+    return (groups || []).reduce((acc, g) => {
       const label = prefix ? `${prefix} / ${g.title}` : g.title;
       acc.push({ id: g.id, label });
       if (g.subParticipationGroups && g.subParticipationGroups.length > 0) {
@@ -178,7 +192,7 @@ const CompetitionDetail = ({ editable = true }) => {
             <Button asChild variant="outline" className="ml-4">
               <Link to={`${basePath}/competitions/${id}/leaderboard`}>Leaderboard öffnen</Link>
             </Button>
-            <Button variant="outline" className="w-fit flex items-center gap-2 mt-2" onClick={() => { setGroupsDraft(competition.participantGroups || []); setGroupsDialogOpen(true); }}>
+            <Button variant="outline" className="w-fit flex items-center gap-2 mt-2" onClick={() => { setGroupsDialogOpen(true); }}>
               <Users className="h-4 w-4" /> Teilnehmergruppen verwalten
             </Button>
           </div>
@@ -192,15 +206,15 @@ const CompetitionDetail = ({ editable = true }) => {
               </div>
               <div>
                 <label className="block font-medium mb-1">Datum</label>
-                <input className="w-full border border-gray-300 rounded-md bg-white px-3 py-2 text-black" value={competition.date ? format(new Date(competition.date), 'dd. MMMM yyyy, HH:mm', { locale: de }) : ''} readOnly />
+                <input className="w-full border border-gray-300 rounded-md bg-white px-3 py-2 text-black" value={competition.date ? format(new Date(competition.date), 'dd. MMMM yyyy', { locale: de }) : ''} readOnly />
               </div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <KlassenList klassen={competition.klassen || []} />
-              <SchreiberList schreiber={competition.schreiber || []} />
+              <SchreiberList writers={competition.writers || []} />
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <DisziplinenList disziplinen={competition.disziplinen || []} />
+              <DisziplinenList disciplines={competition.disciplines || []} />
             </div>
           </div>
         </div>
@@ -216,12 +230,11 @@ const CompetitionDetail = ({ editable = true }) => {
               </Button>
             </div>
             <div className="w-full bg-white border rounded-lg p-2 shadow-sm min-h-[80px]">
-              <TreeView data={mapGroupsToTree(groupsDraft)} />
+              <TreeView data={mapGroupsToTree(competition.participantGroups || [])} />
             </div>
             <DialogFooter className="mt-4">
-              <Button onClick={handleSaveGroups} className="bg-black text-white hover:bg-black/80">Speichern</Button>
               <DialogClose asChild>
-                <Button variant="secondary">Abbrechen</Button>
+                <Button variant="secondary">Schließen</Button>
               </DialogClose>
             </DialogFooter>
             <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
@@ -242,7 +255,7 @@ const CompetitionDetail = ({ editable = true }) => {
                   onChange={e => setParentGroupId(e.target.value)}
                 >
                   <option value="">(Top-Level)</option>
-                  {flattenGroups(groupsDraft).map(g => (
+                  {flattenGroups(competition.participantGroups || []).map(g => (
                     <option key={g.id} value={g.id}>{g.label}</option>
                   ))}
                 </select>

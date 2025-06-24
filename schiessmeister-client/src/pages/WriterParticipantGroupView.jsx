@@ -18,8 +18,7 @@ const WriterParticipantGroupView = () => {
   const [resultDialogOpen, setResultDialogOpen] = useState(false);
   const [activeParticipation, setActiveParticipation] = useState(null);
   const [resultsInput, setResultsInput] = useState([]);
-  const [autoMode, setAutoMode] = useState(true); // true = automatisch, false = manuell
-
+  
   // Alle Gruppen für das Dropdown
   const handleGroupChange = (e) => {
     const newGroupId = e.target.value;
@@ -99,11 +98,6 @@ const WriterParticipantGroupView = () => {
 
   return (
     <main className="max-w-2xl mx-auto mt-8">
-      <div className="flex items-center gap-4 mb-4">
-        <span className="font-medium">Modus:</span>
-        <Switch checked={autoMode} onCheckedChange={setAutoMode} />
-        <span>{autoMode ? 'Automatisch' : 'Manuell'}</span>
-      </div>
       <nav className="text-sm mb-4 flex items-center gap-2 text-muted-foreground">
         <Link to={`/writer/competitions/${competition.id}`} className="hover:underline text-primary font-medium">{competition.name}</Link>
         <span>/</span>
@@ -131,7 +125,6 @@ const WriterParticipantGroupView = () => {
             <li key={p.id} className="flex items-center gap-4 p-2 bg-gray-50 rounded">
               <span className="font-mono w-8">{idx + 1}</span>
               <span className="font-medium">{p.shooter?.name}</span>
-              <span className="text-xs text-muted-foreground">{p.shooter?.email}</span>
               <span className="ml-auto text-sm">{p.discipline}</span>
               <span className="ml-4 text-sm">{p.team}</span>
               <span className="ml-4 text-sm font-bold text-green-700">{percent}% eingetragen</span>
@@ -249,8 +242,8 @@ const WriterParticipantGroupView = () => {
                   // Nur gültige Zahlen zählen
                   const valid = resultsInput.filter(v => typeof v === 'number' && !isNaN(v));
                   if (valid.length > 0) {
-                    const schnitt = valid.reduce((a, b) => a + b, 0) / valid.length;
-                    return <div style={{ fontSize: '2.5rem', fontWeight: 'bold', color: '#17623b' }}>Schnitt: {schnitt.toFixed(2)}</div>;
+                    const sum = valid.reduce((a, b) => a + b, 0);
+                    return <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#17623b' }}>Summe: {sum}</div>;
                   }
                   return null;
                 })()}

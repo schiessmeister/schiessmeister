@@ -45,22 +45,26 @@ const CompetitionLeaderboard = () => {
             <div key={dis + cls} className="mb-8">
               <div className="font-semibold text-lg mb-2 border-b pb-1">{dis} - {cls}</div>
               <div className="flex flex-col gap-2">
-                {participations.slice(0, 3).map((p, i) => (
-                  <Card key={p.id} className="flex items-center gap-4 px-4 py-3">
-                    <div className="text-xl w-6 text-center">
-                      {i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : i + 1}
-                    </div>
-                    <Avatar>
-                      <AvatarFallback>{getInitials(p.shooter?.name || '?')}</AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1">
-                      <div className="font-medium">{p.shooter?.name || '-'}</div>
-                      <div className="text-xs text-muted-foreground">{p.shooter?.email || ''}</div>
-                    </div>
-                    <div className="text-sm font-medium min-w-[100px]">{dis}</div>
-                    <div className="text-sm min-w-[80px]">{p.team || ''}</div>
-                  </Card>
-                ))}
+                {participations.slice(0, 3).map((p, i) => {
+                  const totalPoints = Array.isArray(p.results) ? p.results.reduce((s, r) => s + (typeof r === 'number' ? r : 0), 0) : 0;
+                  return (
+                    <Card key={p.id} className="flex items-center gap-4 px-4 py-3">
+                      <div className="text-xl w-6 text-center">
+                        {i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : i + 1}
+                      </div>
+                      <Avatar>
+                        <AvatarFallback>{getInitials(p.shooter?.name || '?')}</AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1">
+                        <div className="font-medium">{p.shooter?.name || '-'}</div>
+                        <div className="text-xs text-muted-foreground">{p.shooter?.email || ''}</div>
+                      </div>
+                      <div className="text-sm font-medium min-w-[100px]">{dis}</div>
+                      <div className="text-sm min-w-[80px]">{p.team || ''}</div>
+                      <div className="text-lg font-bold min-w-[60px] text-right">{totalPoints}</div>
+                    </Card>
+                  );
+                })}
                 {participations.length === 0 && <div className="text-muted-foreground text-sm">Keine Ergebnisse</div>}
               </div>
             </div>

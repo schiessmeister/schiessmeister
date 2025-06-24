@@ -9,7 +9,6 @@ import ResultsInput from './pages/ResultsInput';
 import CompetitionOverview from './pages/CompetitionOverview';
 import WriterCompetitionOverview from './pages/WriterCompetitionOverview';
 import ParticipantsList from './pages/Participantslist';
-import CreateParticipantGroup from './pages/CreateParticipantGroup';
 import EditParticipantGroup from './pages/EditParticipantGroup';
 import Logout from './pages/Logout';
 import CompetitionLeaderboard from './pages/CompetitionLeaderboard';
@@ -50,7 +49,6 @@ export default function App() {
                                                         <Route path="manager/competitions/:id" element={<CompetitionDetail editable={false} />} />
                                                         <Route path="manager/competitions/:id/edit" element={<EditCompetition />} />
                                                         <Route path="manager/competitions/:id/leaderboard" element={<CompetitionLeaderboard />} />
-                                                        <Route path="manager/participant-groups/new" element={<CreateParticipantGroup />} />
                                                         <Route path="manager/participant-groups/:id/edit" element={<EditParticipantGroup />} />
                                                         
                                                         {/* Writer */}

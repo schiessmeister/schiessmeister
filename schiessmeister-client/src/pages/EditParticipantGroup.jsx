@@ -20,17 +20,37 @@ const getInitials = (name) => name.split(' ').map((n) => n[0]).join('');
 const EditParticipantGroup = () => {
   const { id } = useParams(); // id der Gruppe
   const { competitions } = useData();
-  // Suche die Competition und Gruppe in allen Wettbewerben
-  let found = null;
-  for (const c of competitions) {
-    const g = c.participantGroups?.find(g => String(g.id) === String(id));
-    if (g) {
-      found = { competition: c, group: g };
-      break;
+
+  // Rekursive Hilfsfunktion, um eine Gruppe (und ihre Competition) zu finden
+  function findGroupAndCompetition(competitions, groupId) {
+    for (const c of competitions) {
+      function findGroup(groups) {
+        for (const g of groups || []) {
+          if (String(g.id) === String(groupId)) return g;
+          if (g.subParticipationGroups && g.subParticipationGroups.length > 0) {
+            const found = findGroup(g.subParticipationGroups);
+            if (found) return found;
+          }
+        }
+        return null;
+      }
+      const group = findGroup(c.participantGroups);
+      if (group) return { competition: c, group };
     }
+    return null;
   }
+
+  // Suche die Competition und Gruppe in allen Wettbewerben (inkl. Subgruppen)
+  const found = findGroupAndCompetition(competitions, id);
   if (!found) return <div>Gruppe nicht gefunden</div>;
   const { competition, group } = found;
+
+  // Map group participations (IDs) to full participation objects
+  const groupParticipations = Array.isArray(group.participations)
+    ? group.participations.map(pid =>
+        typeof pid === 'object' ? pid : competition.participations.find(p => p.id === pid)
+      ).filter(Boolean)
+    : [];
 
   const [title, setTitle] = useState(group.title);
   const [dateRange, setDateRange] = useState({
@@ -38,13 +58,46 @@ const EditParticipantGroup = () => {
     to: group.endDateTime,
   });
   const [subGroup, setSubGroup] = useState('');
-  const [participations, setParticipations] = useState(group.participations);
+  const [participations, setParticipations] = useState(groupParticipations);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [newParticipation, setNewParticipation] = useState({ shooter: '', team: '', newTeam: '', discipline: '' });
-  const shooters = competition.participations.map(p => p.shooter); // Demo: alle Shooter
-  const teams = Array.from(new Set(competition.participations.map(p => p.team)));
+  // Unique shooters by email (alle Teilnehmer aus allen Wettbewerben)
+  const shooters = Array.from(
+    new Map(
+      (competitions.flatMap(c => c.participations || []) || [])
+        .filter(p => p && p.shooter && p.shooter.name)
+        .map(p => [p.shooter.name, p.shooter])
+    ).values()
+  );
+
+  // Unique teams aus allen Wettbewerben, ohne leere Strings
+  const initialTeams = Array.from(
+    new Set(
+      (competitions.flatMap(c => c.participations || []) || [])
+        .map(p => p.team)
+        .filter(t => t && t.trim() !== "")
+    )
+  );
+  const [teams, setTeams] = useState(initialTeams);
+
   const disciplines = competition.disciplines.map(d => d.name);
   const [editIndex, setEditIndex] = useState(null);
+
+  // Hilfsfunktion: Hierarchie der Gruppen für Breadcrumb
+  function getGroupHierarchy(groups, groupId, path = []) {
+    for (const g of groups || []) {
+      if (String(g.id) === String(groupId)) {
+        return [...path, g];
+      }
+      if (g.subParticipationGroups && g.subParticipationGroups.length > 0) {
+        const found = getGroupHierarchy(g.subParticipationGroups, groupId, [...path, g]);
+        if (found) return found;
+      }
+    }
+    return null;
+  }
+
+  const groupHierarchy = getGroupHierarchy(competition.participantGroups, group.id) || [];
 
   const handleAddParticipation = () => {
     if (!newParticipation.shooter || !newParticipation.discipline) return;
@@ -97,12 +150,33 @@ const EditParticipantGroup = () => {
     setNewParticipation({ shooter: '', team: '', newTeam: '', discipline: '' });
   };
 
+  // Handler für neues Team übernehmen
+  const handleAddNewTeam = () => {
+    const newTeam = newParticipation.newTeam && newParticipation.newTeam.trim();
+    if (newTeam) {
+      // Team zur Liste hinzufügen, falls noch nicht vorhanden
+      if (!teams.includes(newTeam)) {
+        setTeams([...teams, newTeam]);
+      }
+      setNewParticipation({
+        ...newParticipation,
+        team: newTeam,
+        newTeam: ''
+      });
+    }
+  };
+
   return (
     <main className="max-w-3xl mx-auto mt-8 bg-white rounded-xl border p-8 shadow">
-      <div className="mb-6 text-sm text-muted-foreground flex gap-2 items-center">
+      <div className="mb-6 text-sm text-muted-foreground flex gap-2 items-center flex-wrap">
         <Link to={`/manager/competitions/${competition.id}`} className="hover:underline text-black">{competition.name}</Link>
         <span>/</span>
-        <span className="text-black font-medium">{group.title || title}</span>
+        {groupHierarchy.map((g, idx) => (
+          <span key={g.id} className="flex items-center gap-2">
+            {idx > 0 && <span>/</span>}
+            <span className={idx === groupHierarchy.length - 1 ? 'text-black font-medium' : ''}>{g.title}</span>
+          </span>
+        ))}
       </div>
       <h2 className="text-2xl font-bold mb-4">{title}</h2>
       <div className="flex flex-col md:flex-row gap-8">
@@ -192,7 +266,7 @@ const EditParticipantGroup = () => {
                 </Select>
                 <div className="flex items-center gap-2 mt-2">
                   <Input placeholder="Neues Team (optional)" value={newParticipation.newTeam} onChange={e => setNewParticipation({ ...newParticipation, newTeam: e.target.value, team: '' })} />
-                  <Button size="icon" variant="outline" type="button"><Plus /></Button>
+                  <Button size="icon" variant="outline" type="button" onClick={handleAddNewTeam}><Plus /></Button>
                 </div>
               </div>
               <div className="flex flex-col gap-2 md:col-span-2">
