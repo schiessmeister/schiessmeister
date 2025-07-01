@@ -8,7 +8,7 @@ import { format, parseISO } from 'date-fns';
 import { de } from 'date-fns/locale';
 
 const Competitions = () => {
-  const { competitions } = useData();
+  const { competitions, countParticipantsRecursive } = useData();
   const { role } = useAuth();
   const basePath = role === 'manager' ? '/manager' : '/writer';
 
@@ -58,7 +58,7 @@ const Competitions = () => {
                   <CalendarDays className="w-4 h-4 mr-1 text-purple-400" />
                   <span>{formatDate(c.date)}</span>
                 </div>
-                <span className="bg-black text-white text-xs rounded px-2 py-0.5 w-fit">{c.participations?.length || 0} Teilnehmer</span>
+                <span className="bg-black text-white text-xs rounded px-2 py-0.5 w-fit">{countParticipantsRecursive(c)} Teilnehmer</span>
                 <div className="flex justify-end w-full mt-2">
                   <Link to={`${basePath}/competitions/${c.id}`}>
                     <Button className="bg-black text-white hover:bg-black/80">Öffnen</Button>
