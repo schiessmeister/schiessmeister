@@ -4,14 +4,16 @@ import { getCompetition, deleteCompetition } from '../api/apiClient';
 import { useAuth } from '../context/AuthContext';
 import '../styles/CompetitionOverview.css';
 import { Button } from '@/components/ui/button';
+import { useData } from '../context/DataContext';
 
 const CompetitionOverview = () => {
 	const { id } = useParams();
 	const navigate = useNavigate();
 	const [competition, setCompetition] = useState(null);
 	const [error, setError] = useState(null);
-        const auth = useAuth();
-        const basePath = auth.role === 'manager' ? '/manager' : '/writer';
+	const auth = useAuth();
+	const basePath = auth.role === 'manager' ? '/manager' : '/writer';
+	const { countParticipantsRecursive } = useData();
 
 	const parseResults = (participation) => {
 		let results = JSON.parse(participation.results || '[]');
@@ -55,6 +57,7 @@ const CompetitionOverview = () => {
 
 	const nextParticipants = competition.participations.filter((p) => filterParticipations(p, false));
 	const completedParticipants = competition.participations.filter((p) => filterParticipations(p, true));
+	const participantCount = countParticipantsRecursive(competition);
 
 	const ParticipantList = ({ participants, title }) => (
 		<div className="participants-list">
@@ -84,7 +87,7 @@ const CompetitionOverview = () => {
 					<strong>Ort:</strong> {competition.location}
 				</p>
 				<p>
-					<strong>Teilnehmer:</strong> {competition.participations.length}
+					<strong>Teilnehmer:</strong> {participantCount}
 				</p>
 			</div>
                         <Button variant="secondary" onClick={() => window.open(`/public-leaderboard/${id}`, '_blank')}>

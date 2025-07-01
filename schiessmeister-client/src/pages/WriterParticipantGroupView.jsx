@@ -32,7 +32,7 @@ const WriterParticipantGroupView = () => {
     const groupParticipationIds = Array.isArray(group.participations)
       ? group.participations.map(p => (typeof p === 'object' ? p.id : p))
       : [];
-    const groupParticipations = competition.participations.filter(p => groupParticipationIds.includes(p.id));
+    const groupParticipations = (competition.participations || []).filter(p => groupParticipationIds.includes(p.id));
     // Punkte aus results extrahieren (z.B. Summe oder Wert)
     return [...groupParticipations].sort((a, b) => {
       const sumA = Array.isArray(a.results) ? a.results.reduce((s, r) => s + (typeof r === 'number' ? r : 0), 0) : 0;
