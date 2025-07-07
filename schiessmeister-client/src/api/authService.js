@@ -1,13 +1,20 @@
 import { createApi } from '../utils/api';
+import { getOwnedOrganizations as getOwnedOrganizationsApi } from './apiClient';
 
 export const loginRequest = async (email, password, role) => {
-    // Temporärer Mock-Login: Akzeptiert beliebige Zugangsdaten
-    console.log('Mock-Login mit:', { email, password, role });
-    return Promise.resolve({
-        token: 'mock-token-' + Math.random().toString(36).substring(7),
-        id: Math.floor(Math.random() * 1000),
-        role: role // Verwende die ausgewählte Rolle
+    // Echte Login-Implementierung
+    const api = createApi();
+    // Username = Email laut Backend-DTO
+    const response = await api.post('/authenticate/login', {
+        Username: email,
+        Password: password
     });
+    // response: { token, id, expiration, roles }
+    return {
+        token: response.token,
+        id: response.id,
+        role: role // Rolle aus Auswahl, Backend-Rollen werden ignoriert
+    };
 };
 
 export const registerRequest = async (username, email, password) => {
@@ -19,3 +26,5 @@ export const getSubscriptionDetails = async (competitionId) => {
     const api = createApi();
     return api.get(`/competition/${competitionId}/subscribe`);
 };
+
+export const getOwnedOrganizations = getOwnedOrganizationsApi;

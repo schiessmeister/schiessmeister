@@ -52,3 +52,13 @@ export const deleteCompetition = async (id, auth) => {
 	const api = createApi(auth.token, auth.handleUnauthorized);
 	return api.delete(`/competition/${id}`);
 };
+
+export const getOwnedOrganizations = async (userId, token) => {
+	const api = createApi(token);
+	return api.get(`/users/${userId}/owned-organizations`);
+};
+
+export const getCompetitionsByOrganization = async (organizationId, auth) => {
+	const api = createApi(auth?.token, auth?.handleUnauthorized);
+	return api.get(`/organizations/${organizationId}/competitions`);
+};

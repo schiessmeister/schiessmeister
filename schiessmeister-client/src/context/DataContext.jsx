@@ -1,26 +1,44 @@
-import { createContext, useContext, useState } from 'react';
-import { CompetitionService } from '../services/CompetitionService';
+import { createContext, useContext, useState, useEffect } from 'react';
+import { getCompetitionsByOrganization } from '../api/apiClient';
+import { useAuth } from './AuthContext';
 
 const DataContext = createContext(null);
 
 export const DataProvider = ({ children }) => {
-  const [competitions, setCompetitions] = useState(
-    CompetitionService.getCompetitions()
-  );
+  const [competitions, setCompetitions] = useState([]);
+  const [organization, setOrganizationState] = useState(() => {
+    const orgRaw = localStorage.getItem('organization');
+    return orgRaw ? JSON.parse(orgRaw) : null;
+  });
+  const { token, handleUnauthorized } = useAuth();
 
-  const addCompetition = (competition) => {
-    CompetitionService.addCompetition(competition);
-    setCompetitions([...CompetitionService.getCompetitions()]);
-  };
+  useEffect(() => {
+    const fetchCompetitions = async () => {
+      if (organization?.id) {
+        try {
+          const data = await getCompetitionsByOrganization(organization.id, { token, handleUnauthorized });
+          setCompetitions(data);
+        } catch (err) {
+          setCompetitions([]);
+        }
+      } else {
+        setCompetitions([]);
+      }
+    };
+    fetchCompetitions();
+  }, [organization, token, handleUnauthorized]);
 
-  const updateCompetition = (id, updated) => {
-    CompetitionService.updateCompetition(id, updated);
-    setCompetitions([...CompetitionService.getCompetitions()]);
+  const setOrganization = (org) => {
+    setOrganizationState(org);
+    if (org) {
+      localStorage.setItem('organization', JSON.stringify(org));
+    } else {
+      localStorage.removeItem('organization');
+    }
   };
 
   // Rekursive Zählfunktion für Teilnehmer in allen Gruppen
   function countParticipantsRecursive(competition) {
-    // Hilfsfunktion für Gruppen
     function countInGroups(groups) {
       if (!groups) return 0;
       return groups.reduce((sum, g) => {
@@ -29,14 +47,13 @@ export const DataProvider = ({ children }) => {
         return sum + groupCount + subCount;
       }, 0);
     }
-    // Teilnehmer in Gruppen + Teilnehmer direkt in der Competition (falls vorhanden)
     const groupCount = countInGroups(competition.participantGroups);
     const directCount = Array.isArray(competition.participations) ? competition.participations.length : 0;
     return groupCount > 0 ? groupCount : directCount;
   }
 
   return (
-    <DataContext.Provider value={{ competitions, addCompetition, updateCompetition, countParticipantsRecursive }}>
+    <DataContext.Provider value={{ competitions, countParticipantsRecursive, organization, setOrganization }}>
       {children}
     </DataContext.Provider>
   );

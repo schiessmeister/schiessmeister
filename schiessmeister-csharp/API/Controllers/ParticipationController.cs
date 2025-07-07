@@ -44,11 +44,19 @@ public class ParticipationController : ControllerBase {
         if (participation.Discipline?.CompetitionId != participation.CompetitionId)
             return BadRequest("A participation can only have a discipline of the attended competition.");
 
-        if (participation.ShooterId != participation.RecorderId)
+        if (participation.ShooterId == participation.RecorderId)
             return BadRequest("The shooter is not allowed to record himself.");
-
-        newParticipation.Id = id;
-        return Ok(await _participation.UpdateAsync(newParticipation));
+        
+        participation.ShooterClass = newParticipation.ShooterClass;
+        participation.PositionNb = newParticipation.PositionNb;
+        participation.Result = newParticipation.Result;
+        participation.Team = newParticipation.Team;
+        participation.DqStatus = newParticipation.DqStatus;
+        participation.DisciplineId = newParticipation.DisciplineId;
+        participation.RecorderId = newParticipation.RecorderId;
+        participation.ParticipationGroupId = newParticipation.ParticipationGroupId;
+        
+        return Ok(await _participation.UpdateAsync(participation));
     }
 
     [HttpDelete("{id}")]

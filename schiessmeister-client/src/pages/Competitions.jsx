@@ -23,6 +23,17 @@ const Competitions = () => {
     }
   };
 
+  // Teilnehmer zählen: nutze groups, fallback auf participations
+  const countParticipants = (competition) => {
+    if (Array.isArray(competition.groups) && competition.groups.length > 0) {
+      return competition.groups.reduce((sum, g) => sum + (Array.isArray(g.participations) ? g.participations.length : 0), 0);
+    }
+    if (Array.isArray(competition.participations)) {
+      return competition.participations.length;
+    }
+    return 0;
+  };
+
   return (
     <main className="min-h-screen w-full px-4 py-10 bg-background">
       <div className="max-w-5xl mx-auto">
@@ -43,7 +54,7 @@ const Competitions = () => {
             <Card key={c.id} className="rounded-xl flex flex-col gap-2">
               <CardHeader className="pb-2">
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-lg font-semibold">{c.name}</CardTitle>
+                  <CardTitle className="text-lg font-semibold">{c.title}</CardTitle>
                   {role === 'manager' && (
                     <Link to={`${basePath}/competitions/${c.id}/edit`}>
                       <Button variant="ghost" size="icon" className="h-8 w-8">
@@ -56,9 +67,13 @@ const Competitions = () => {
               <CardContent className="flex flex-col gap-2">
                 <div className="flex items-center gap-2 border-2 border-dotted border-purple-400 rounded-md px-2 py-1 text-sm text-black/80 w-fit">
                   <CalendarDays className="w-4 h-4 mr-1 text-purple-400" />
-                  <span>{formatDate(c.date)}</span>
+                  <span>{formatDate(c.startDateTime)}</span>
                 </div>
-                <span className="bg-black text-white text-xs rounded px-2 py-0.5 w-fit">{countParticipantsRecursive(c)} Teilnehmer</span>
+                {c.location && <span className="text-xs text-muted-foreground">{c.location}</span>}
+                <span className="bg-black text-white text-xs rounded px-2 py-0.5 w-fit">{countParticipants(c)} Teilnehmer</span>
+                {c.announcementUrl && (
+                  <a href={c.announcementUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 underline w-fit">Ausschreibung</a>
+                )}
                 <div className="flex justify-end w-full mt-2">
                   <Link to={`${basePath}/competitions/${c.id}`}>
                     <Button className="bg-black text-white hover:bg-black/80">Öffnen</Button>
