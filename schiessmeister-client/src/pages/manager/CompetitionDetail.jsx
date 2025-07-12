@@ -1,5 +1,5 @@
 import { Link, useParams } from 'react-router-dom';
-import { useData } from '../context/DataContext';
+import { useData } from '../../context/DataContext';
 import { Button } from '@/components/ui/button';
 import { TreeView } from '@/components/tree-view';
 import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from '@/components/ui/dialog';

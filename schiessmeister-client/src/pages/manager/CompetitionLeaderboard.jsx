@@ -1,7 +1,7 @@
 import { useParams } from 'react-router-dom';
 import { useEffect, useState } from 'react';
-import { useAuth } from '../context/AuthContext';
-import { getCompetitionLeaderboards } from '../api/apiClient';
+import { useAuth } from '../../context/AuthContext';
+import { getCompetitionLeaderboards } from '../../api/apiClient';
 import { Card } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';

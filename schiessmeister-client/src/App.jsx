@@ -1,25 +1,21 @@
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Competitions from './pages/Competitions';
-import CreateCompetition from './pages/CreateCompetition';
-import EditCompetition from './pages/EditCompetition';
-import CompetitionDetail from './pages/CompetitionDetail';
-import CompetitionOverview from './pages/CompetitionOverview';
-import EditParticipantGroup from './pages/EditParticipantGroup';
+import CreateCompetition from './pages/manager/CreateCompetition';
+import EditCompetition from './pages/manager/EditCompetition';
+import CompetitionDetail from './pages/manager/CompetitionDetail';
+import EditParticipantGroup from './pages/manager/EditParticipantGroup';
 import Logout from './pages/Logout';
-import CompetitionLeaderboard from './pages/CompetitionLeaderboard';
-import WriterParticipantsList from './pages/WriterParticipantsList';
-import WriterParticipantGroupView from './pages/WriterParticipantGroupView';
-import { BrowserRouter, Routes, Route, Navigate, Link } from 'react-router-dom';
+import CompetitionLeaderboard from './pages/manager/CompetitionLeaderboard';
+import WriterParticipantsList from './pages/writer/WriterParticipantsList';
+import WriterParticipantGroupView from './pages/writer/WriterParticipantGroupView';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import './App.css';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { AuthProvider } from './context/AuthContext';
 import { DataProvider } from './context/DataContext';
 import ProtectedRoute from './components/ProtectedRoute';
-import { NavigationMenu, NavigationMenuList, NavigationMenuItem, NavigationMenuLink } from '@/components/ui/navigation-menu';
-import { Shield } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import RoleSwitch from './components/RoleSwitch';
 
 export default function App() {

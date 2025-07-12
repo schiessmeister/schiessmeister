@@ -1,4 +1,4 @@
-import { createApi } from '../utils/api';
+import { createApi } from './api';
 import { getOwnedOrganizations as getOwnedOrganizationsApi } from './apiClient';
 
 export const loginRequest = async (email, password, role) => {

@@ -1,12 +1,10 @@
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { useData } from '../context/DataContext';
+import { useData } from '../../context/DataContext';
 import { Button } from '@/components/ui/button';
 import { useMemo, useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Switch } from '@/components/ui/switch';
-import { updateParticipation, getCompetition } from '../api/apiClient';
-import { useAuth } from '../context/AuthContext';
+import { updateParticipation, getCompetition } from '../../api/apiClient';
+import { useAuth } from '../../context/AuthContext';
 
 const WriterParticipantGroupView = () => {
   const { competitionId, groupId } = useParams();

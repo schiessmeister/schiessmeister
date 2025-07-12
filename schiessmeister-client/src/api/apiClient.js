@@ -1,4 +1,4 @@
-import { createApi } from '../utils/api';
+import { createApi } from './api';
 
 export const getCompetitions = async (auth) => {
 	if (!auth.userId) throw new Error('User not authenticated');
