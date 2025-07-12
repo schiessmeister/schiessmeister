@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useData } from '../context/DataContext';
 import { useAuth } from '../context/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -6,11 +6,30 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { CalendarDays, Plus, Pencil, Users } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { de } from 'date-fns/locale';
+import { useState } from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 
 const Competitions = () => {
   const { competitions, countParticipantsRecursive } = useData();
   const { role } = useAuth();
   const basePath = role === 'manager' ? '/manager' : '/writer';
+  const navigate = useNavigate();
+
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [selectedGroups, setSelectedGroups] = useState([]);
+  const [selectedCompetitionId, setSelectedCompetitionId] = useState(null);
+  const [selectedGroupId, setSelectedGroupId] = useState(null);
+
+  const handleWriterOpen = (competition) => {
+    if (Array.isArray(competition.groups) && competition.groups.length > 0) {
+      setSelectedGroups(competition.groups);
+      setSelectedCompetitionId(competition.id);
+      setSelectedGroupId(competition.groups[0]?.id || null);
+      setDialogOpen(true);
+    } else {
+      navigate(`/writer/competitions/${competition.id}`);
+    }
+  };
 
   const formatDate = (dateString) => {
     if (!dateString) return '';
@@ -75,9 +94,18 @@ const Competitions = () => {
                   <a href={c.announcementUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 underline w-fit">Ausschreibung</a>
                 )}
                 <div className="flex justify-end w-full mt-2">
-                  <Link to={`${basePath}/competitions/${c.id}`}>
-                    <Button className="bg-black text-white hover:bg-black/80">Öffnen</Button>
-                  </Link>
+                  {role === 'manager' ? (
+                    <Link to={`${basePath}/competitions/${c.id}`}>
+                      <Button className="bg-black text-white hover:bg-black/80">Öffnen</Button>
+                    </Link>
+                  ) : (
+                    <Button
+                      className="bg-black text-white hover:bg-black/80"
+                      onClick={() => handleWriterOpen(c)}
+                    >
+                      Öffnen
+                    </Button>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -85,6 +113,40 @@ const Competitions = () => {
           {competitions.length === 0 && <p className="col-span-full text-center text-muted-foreground">Keine Wettbewerbe vorhanden.</p>}
         </div>
       </div>
+      {/* Writer Gruppen-Auswahl Dialog */}
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Gruppe auswählen</DialogTitle>
+          </DialogHeader>
+          <div className="flex flex-col gap-4 mt-2">
+            <select
+              className="border rounded px-2 py-1 text-black font-semibold bg-white"
+              value={selectedGroupId || ''}
+              onChange={e => setSelectedGroupId(e.target.value)}
+            >
+              {selectedGroups.map(g => (
+                <option key={g.id} value={g.id}>{g.title}</option>
+              ))}
+            </select>
+          </div>
+          <DialogFooter className="mt-4">
+            <Button
+              className="bg-black text-white hover:bg-black/80"
+              onClick={() => {
+                setDialogOpen(false);
+                if (selectedCompetitionId && selectedGroupId) {
+                  navigate(`/writer/competitions/${selectedCompetitionId}/participationGroups/${selectedGroupId}`);
+                }
+              }}
+              disabled={!selectedGroupId}
+            >
+              Weiter
+            </Button>
+            <Button variant="secondary" onClick={() => setDialogOpen(false)}>Abbrechen</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </main>
   );
 };

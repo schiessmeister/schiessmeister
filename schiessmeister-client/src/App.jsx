@@ -4,15 +4,10 @@ import Competitions from './pages/Competitions';
 import CreateCompetition from './pages/CreateCompetition';
 import EditCompetition from './pages/EditCompetition';
 import CompetitionDetail from './pages/CompetitionDetail';
-import Results from './pages/Results';
-import ResultsInput from './pages/ResultsInput';
 import CompetitionOverview from './pages/CompetitionOverview';
-import WriterCompetitionOverview from './pages/WriterCompetitionOverview';
-import ParticipantsList from './pages/Participantslist';
 import EditParticipantGroup from './pages/EditParticipantGroup';
 import Logout from './pages/Logout';
 import CompetitionLeaderboard from './pages/CompetitionLeaderboard';
-import PublicLeaderboard from './pages/PublicLeaderboard';
 import WriterParticipantsList from './pages/WriterParticipantsList';
 import WriterParticipantGroupView from './pages/WriterParticipantGroupView';
 import { BrowserRouter, Routes, Route, Navigate, Link } from 'react-router-dom';
@@ -39,7 +34,6 @@ export default function App() {
                                                 <Route path="login" element={<Login />} />
                                                 <Route path="register" element={<Register />} />
                                                 <Route path="logout" element={<Logout />} />
-                                                <Route path="public-leaderboard/:id" element={<PublicLeaderboard />} />
 
                                                 {/* Protected routes */}
                                                 <Route element={<ProtectedRoute />}>
@@ -53,9 +47,7 @@ export default function App() {
                                                         
                                                         {/* Writer */}
                                                         <Route path="writer/competitions" element={<Competitions />} />
-                                                        <Route path="writer/competitions/:id" element={<WriterCompetitionOverview />} />
                                                         <Route path="writer/competitions/:competitionId/participationGroups/:groupId" element={<WriterParticipantGroupView />} />
-                                                        <Route path="writer/results/:competitionId/:participationId" element={<ResultsInput />} />
                                                         <Route path="writer/participantsList/:id" element={<WriterParticipantsList />} />
                                                 </Route>
 

@@ -1,17 +1,19 @@
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useData } from '../context/DataContext';
 import { Button } from '@/components/ui/button';
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
+import { updateParticipation, getCompetition } from '../api/apiClient';
+import { useAuth } from '../context/AuthContext';
 
 const WriterParticipantGroupView = () => {
   const { competitionId, groupId } = useParams();
   const navigate = useNavigate();
   const { competitions, updateCompetition } = useData();
   const competition = competitions.find(c => String(c.id) === String(competitionId));
-  const groups = competition?.participantGroups || [];
+  const groups = competition?.groups || [];
   const group = groups.find(g => String(g.id) === String(groupId));
 
   // Dialog-State für Ergebnisse eintragen
@@ -28,24 +30,19 @@ const WriterParticipantGroupView = () => {
   // Teilnehmer sortieren nach Rang (z.B. Punkte, wie im Manager-Leaderboard)
   const sortedParticipations = useMemo(() => {
     if (!group) return [];
-    // Nur die Teilnahmen, die zur Gruppe gehören:
-    const groupParticipationIds = Array.isArray(group.participations)
-      ? group.participations.map(p => (typeof p === 'object' ? p.id : p))
-      : [];
-    const groupParticipations = (competition.participations || []).filter(p => groupParticipationIds.includes(p.id));
-    // Punkte aus results extrahieren (z.B. Summe oder Wert)
-    return [...groupParticipations].sort((a, b) => {
-      const sumA = Array.isArray(a.results) ? a.results.reduce((s, r) => s + (typeof r === 'number' ? r : 0), 0) : 0;
-      const sumB = Array.isArray(b.results) ? b.results.reduce((s, r) => s + (typeof r === 'number' ? r : 0), 0) : 0;
+    return [...(group.participations || [])].sort((a, b) => {
+      const sumA = a.result?.totalPoints || 0;
+      const sumB = b.result?.totalPoints || 0;
       return sumB - sumA;
     });
-  }, [group, competition.participations]);
+  }, [group, group.participations]);
 
   // Disziplin-Infos für das Modal
   const getDisciplineInfo = (participation) => {
-    if (!competition || !participation) return { seriesCount: 1, seriesShots: 1 };
-    const disc = competition.disciplines?.find(d => d.name === participation.discipline);
-    return disc || { seriesCount: 1, seriesShots: 1 };
+    if (!participation) return { seriesCount: 1, shotsPerSeries: 1 };
+    // Disziplin ist jetzt direkt im participation-Objekt
+    const disc = participation.discipline;
+    return disc || { seriesCount: 1, shotsPerSeries: 1 };
   };
 
   // Hilfsfunktionen für Serien-Status
@@ -68,66 +65,66 @@ const WriterParticipantGroupView = () => {
   // Öffne Dialog und initialisiere Felder
   const handleOpenResultDialog = (participation) => {
     setActiveParticipation(participation);
-    // Vorbelegen mit existierenden Werten oder leeren Feldern
+    // Vorbelegen mit existierenden Werten oder leeren Feldern (neues Modell: result.series)
     let initialResults = [];
-    if (Array.isArray(participation.results)) {
-      initialResults = participation.results;
-    } else if (typeof participation.results === 'string') {
-      try {
-        const parsed = JSON.parse(participation.results);
-        if (Array.isArray(parsed)) initialResults = parsed;
-      } catch {}
+    if (participation.result && Array.isArray(participation.result.series)) {
+      initialResults = participation.result.series.map(s => ({ ...s }));
     }
     setResultsInput(initialResults);
     setResultDialogOpen(true);
   };
 
   // Ergebnisse speichern
-  const handleSaveResults = () => {
+  const { token, handleUnauthorized } = useAuth();
+  const handleSaveResults = async () => {
     if (!activeParticipation) return;
-    // Participation in Competition finden und aktualisieren
-    const updatedParticipations = competition.participations.map(p =>
-      p.id === activeParticipation.id ? { ...p, results: resultsInput } : p
-    );
-    // Competition im Context aktualisieren
-    updateCompetition(competition.id, { ...competition, participations: updatedParticipations });
-    setResultDialogOpen(false);
+    try {
+      // Participation im Backend aktualisieren
+      await updateParticipation(activeParticipation.id, { ...activeParticipation, result: { ...activeParticipation.result, series: resultsInput } }, { token, handleUnauthorized });
+      // Competition neu laden
+      const updated = await getCompetition(competition.id, { token, handleUnauthorized });
+      updateCompetition(competition.id, updated);
+      setResultDialogOpen(false);
+    } catch (err) {
+      alert('Fehler beim Speichern!');
+    }
   };
+
+  useEffect(() => {
+    if (!group || !Array.isArray(group.participations)) {
+      navigate('/login');
+    }
+  }, [group, navigate]);
 
   if (!competition || !group) return <div>Keine Gruppe gefunden.</div>;
 
   return (
     <main className="max-w-2xl mx-auto mt-8">
-      <nav className="text-sm mb-4 flex items-center gap-2 text-muted-foreground">
-        <Link to={`/writer/competitions/${competition.id}`} className="hover:underline text-primary font-medium">{competition.name}</Link>
+      {/* Breadcrumb */}
+      <nav className="flex items-center gap-2 text-sm mb-4 text-muted-foreground">
+        <Link to={`/writer/competitions/${competition.id}/participationGroups/${group.id}`} className="hover:underline text-primary font-medium">{competition.title}</Link>
         <span>/</span>
-        <select
-          className="border rounded px-2 py-1 text-black font-semibold bg-white"
-          value={group.id}
-          onChange={handleGroupChange}
-        >
-          {groups.map(g => (
-            <option key={g.id} value={g.id}>{g.title}</option>
-          ))}
-        </select>
+        <span className="font-semibold text-black">{group.title}</span>
       </nav>
-      <h2 className="text-2xl font-bold mb-6">{competition.name} – {group.title}</h2>
+      <h2 className="text-2xl font-bold mb-6">{group.title}</h2>
       <ul className="space-y-2">
         {sortedParticipations.map((p, idx) => {
-          // Fortschritt berechnen
-          const disc = competition.disciplines?.find(d => d.name === p.discipline);
+          // Fortschritt berechnen (neues Modell)
+          const disc = p.discipline;
           const seriesCount = disc?.seriesCount || 1;
-          const validCount = Array.isArray(p.results)
-            ? p.results.filter(v => typeof v === 'number' && !isNaN(v)).length
-            : (typeof p.results === 'string' ? (() => { try { const arr = JSON.parse(p.results); return Array.isArray(arr) ? arr.filter(v => typeof v === 'number' && !isNaN(v)).length : 0; } catch { return 0; } })() : 0);
-          const percent = Math.round((validCount / seriesCount) * 100);
+          const shotsPerSeries = disc?.shotsPerSeries || 1;
+          let filled = 0;
+          if (p.result && Array.isArray(p.result.series)) {
+            filled = p.result.series.reduce((sum, serie) => sum + (Array.isArray(serie.points) ? serie.points.filter(v => typeof v === 'number' && !isNaN(v)).length : 0), 0);
+          }
+          const total = seriesCount * shotsPerSeries;
+          const percent = total > 0 ? Math.round((filled / total) * 100) : 0;
           return (
             <li key={p.id} className="flex items-center gap-4 p-2 bg-gray-50 rounded">
               <span className="font-mono w-8">{idx + 1}</span>
-              <span className="font-medium">{p.shooter?.name}</span>
-              <span className="ml-auto text-sm">{p.discipline}</span>
+              <span className="font-medium">{p.shooter?.fullname || p.shooter?.name}</span>
+              <span className="ml-auto text-sm">{disc?.name || ''}</span>
               <span className="ml-4 text-sm">{p.team}</span>
-              <span className="ml-4 text-sm font-bold text-green-700">{percent}% eingetragen</span>
               <Button variant="outline" onClick={() => handleOpenResultDialog(p)}>
                 Ergebnisse eintragen
               </Button>
@@ -150,103 +147,52 @@ const WriterParticipantGroupView = () => {
           {activeParticipation && (
             <div className="flex flex-col gap-4">
               <div>
-                <div className="font-medium mb-2">{activeParticipation.shooter?.name} ({activeParticipation.discipline})</div>
+                <div className="font-medium mb-2">{activeParticipation.shooter?.fullname || activeParticipation.shooter?.name} ({activeParticipation.discipline?.name || ''})</div>
                 {/* Dynamische Felder je Serie/Schuss */}
                 {(() => {
-                  const { seriesCount, seriesShots } = getDisciplineInfo(activeParticipation);
+                  const { seriesCount, shotsPerSeries } = getDisciplineInfo(activeParticipation);
                   const fields = [];
                   for (let s = 0; s < seriesCount; s++) {
-                    const status = getSeriesStatus(resultsInput, s, 1); // 1, weil wir jetzt pro Serie einen Wert speichern
-                    const maxValue = seriesShots * 10;
-                    const value = typeof resultsInput[s] === 'number' ? resultsInput[s] : '';
+                    const serie = resultsInput[s] || { points: Array(shotsPerSeries).fill(0), malfunctions: 0, misses: 0, totalPoints: 0 };
                     fields.push(
-                      <div key={s} className="mb-2">
-                        <div className="font-semibold mb-1">Serie {s + 1}</div>
-                        <div className="flex gap-2 items-center">
-                          <Button size="sm" variant="outline" onClick={() => {
-                            if (!status) {
-                              const newResults = [...resultsInput];
-                              newResults[s] = Math.max(0, (typeof newResults[s] === 'number' ? newResults[s] : 0) - 1);
-                              setResultsInput(newResults);
-                            }
-                          }} disabled={status || value <= 0}>-</Button>
-                          <input
-                            type="number"
-                            min={0}
-                            max={maxValue}
-                            className="w-24 text-center border rounded"
-                            value={status ? '' : value}
-                            onChange={e => {
-                              if (!status) {
-                                let val = parseInt(e.target.value, 10);
-                                if (isNaN(val)) val = 0;
-                                val = Math.max(0, Math.min(maxValue, val));
-                                const newResults = [...resultsInput];
-                                newResults[s] = val;
-                                setResultsInput(newResults);
-                              }
-                            }}
-                            disabled={!!status}
-                          />
-                          <Button size="sm" variant="outline" onClick={() => {
-                            if (!status) {
-                              const newResults = [...resultsInput];
-                              newResults[s] = Math.min(maxValue, (typeof newResults[s] === 'number' ? newResults[s] : 0) + 1);
-                              setResultsInput(newResults);
-                            }
-                          }} disabled={status || value >= maxValue}>+</Button>
-                          <Button size="sm" variant={status === 'DNF' ? 'destructive' : 'outline'} onClick={() => {
-                            const newResults = [...resultsInput];
-                            newResults[s] = 'DNF';
-                            setResultsInput(newResults);
-                          }}>
-                            DNF
-                          </Button>
-                          <Button size="sm" variant={status === 'DNQ' ? 'destructive' : 'outline'} onClick={() => {
-                            const newResults = [...resultsInput];
-                            newResults[s] = 'DNQ';
-                            setResultsInput(newResults);
-                          }}>
-                            DNQ
-                          </Button>
-                          {status && (
-                            <span className="ml-2 font-bold">{status}</span>
-                          )}
-                          {status && (
-                            <Button size="sm" variant="secondary" onClick={() => {
-                              const newResults = [...resultsInput];
-                              newResults[s] = 0;
-                              setResultsInput(newResults);
-                            }}>
-                              Zurücksetzen
-                            </Button>
-                          )}
-                          {/* Neuer Button zum Löschen/Zurücksetzen */}
-                          <Button size="sm" variant="ghost" onClick={() => {
-                            const newResults = [...resultsInput];
-                            newResults[s] = '';
-                            setResultsInput(newResults);
-                          }} title="Serie löschen">
-                            🗑️
-                          </Button>
+                      <div key={s} className="mb-6">
+                        <div className="text-lg font-semibold mb-2">Serie {s + 1}</div>
+                        <div className="flex justify-center">
+                          <div className="grid grid-cols-5 gap-2">
+                            {serie.points.map((pt, i) => (
+                              <input
+                                key={i}
+                                type="text"
+                                inputMode="numeric"
+                                pattern="[0-9]"
+                                maxLength={1}
+                                className="text-4xl font-mono w-12 h-14 text-center border-2 border-green-700 rounded-lg font-bold focus:outline-none focus:ring-2 focus:ring-green-400"
+                                value={pt === 0 ? '' : pt}
+                                onChange={e => {
+                                  let val = e.target.value.replace(/[^0-9]/g, '');
+                                  if (val.length > 1) val = val[0];
+                                  const num = val === '' ? 0 : parseInt(val, 10);
+                                  const newResults = [...resultsInput];
+                                  if (!newResults[s]) newResults[s] = { points: Array(shotsPerSeries).fill(0), malfunctions: 0, misses: 0, totalPoints: 0 };
+                                  newResults[s].points[i] = num;
+                                  newResults[s].totalPoints = newResults[s].points.reduce((a, b) => a + b, 0);
+                                  setResultsInput(newResults);
+                                }}
+                              />
+                            ))}
+                          </div>
                         </div>
                       </div>
                     );
                   }
                   return fields;
                 })()}
-              </div>
-              {/* Schnitt-Anzeige */}
-              <div className="flex flex-col items-center mt-6">
-                {(() => {
-                  // Nur gültige Zahlen zählen
-                  const valid = resultsInput.filter(v => typeof v === 'number' && !isNaN(v));
-                  if (valid.length > 0) {
-                    const sum = valid.reduce((a, b) => a + b, 0);
-                    return <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#17623b' }}>Summe: {sum}</div>;
-                  }
-                  return null;
-                })()}
+                {/* Gesamtsumme aller Serien */}
+                <div className="flex flex-col items-center mt-8">
+                  <div style={{ fontSize: '2rem', fontWeight: 'bold', color: '#17623b' }}>
+                    Gesamtsumme: {resultsInput.reduce((sum, serie) => sum + (serie?.totalPoints || 0), 0)}
+                  </div>
+                </div>
               </div>
             </div>
           )}

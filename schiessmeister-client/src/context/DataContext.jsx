@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect } from 'react';
-import { getCompetitionsByOrganization } from '../api/apiClient';
+import { getCompetitionsByOrganization, getCompetition } from '../api/apiClient';
 import { useAuth } from './AuthContext';
 
 const DataContext = createContext(null);
@@ -16,8 +16,19 @@ export const DataProvider = ({ children }) => {
     const fetchCompetitions = async () => {
       if (organization?.id) {
         try {
-          const data = await getCompetitionsByOrganization(organization.id, { token, handleUnauthorized });
-          setCompetitions(data);
+          // 1. Wettbewerbe der Organisation laden (nur Basisdaten)
+          const competitionsList = await getCompetitionsByOrganization(organization.id, { token, handleUnauthorized });
+          // 2. Für jeden Wettbewerb die Details nachladen
+          const detailedCompetitions = await Promise.all(
+            competitionsList.map(async (c) => {
+              try {
+                return await getCompetition(c.id, { token, handleUnauthorized });
+              } catch (err) {
+                return null; // Fehlerhafte Wettbewerbe überspringen
+              }
+            })
+          );
+          setCompetitions(detailedCompetitions.filter(Boolean));
         } catch (err) {
           setCompetitions([]);
         }
@@ -37,6 +48,12 @@ export const DataProvider = ({ children }) => {
     }
   };
 
+  // Competition im State aktualisieren
+  const updateCompetition = (competitionId, updatedCompetition) => {
+    setCompetitions(prev => prev.map(c => c.id === competitionId ? { ...c, ...updatedCompetition } : c));
+    // Hier könnte ggf. noch ein API-Call erfolgen, falls Backend-Sync nötig ist
+  };
+
   // Rekursive Zählfunktion für Teilnehmer in allen Gruppen
   function countParticipantsRecursive(competition) {
     function countInGroups(groups) {
@@ -53,7 +70,7 @@ export const DataProvider = ({ children }) => {
   }
 
   return (
-    <DataContext.Provider value={{ competitions, countParticipantsRecursive, organization, setOrganization }}>
+    <DataContext.Provider value={{ competitions, countParticipantsRecursive, organization, setOrganization, updateCompetition }}>
       {children}
     </DataContext.Provider>
   );

@@ -10,6 +10,7 @@ public class MySqlCompetitionRepository(MySqlDbContext dbContext) : MySqlReposit
     public async Task<Competition?> FindByIdFullTreeAsync(int id) {
         return await _db.Competitions
             .Include(c => c.Participations.OrderBy(p => p.ShooterClass).ThenBy(p => p.Shooter!.Lastname).ThenBy(p => p.Shooter!.Firstname))
+            .ThenInclude(p=>p.Shooter)
             .Include(c => c.Disciplines)
             .Include(c => c.Recorders)
             .Include(c => c.Groups.Where(g => g.ParentGroupId == null)) // Only top-level groups.
