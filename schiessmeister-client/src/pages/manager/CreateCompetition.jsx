@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
-import { useData } from '../context/DataContext';
-import CompetitionForm from '../components/CompetitionForm';
+import { useData } from '../../context/DataContext';
+import CompetitionForm from '../../components/CompetitionForm';
 
 const CreateCompetition = () => {
   const { addCompetition } = useData();

@@ -20,12 +20,11 @@ public class Program {
     public static void Main(string[] args) {
         var builder = WebApplication.CreateBuilder(args);
 
-        builder.Services.AddControllers();
-
-        // TODO remove if not needed.
-        //.AddJsonOptions(options => {
-        //    options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
-        //});
+        builder.Services.AddControllers().AddJsonOptions(options => {
+            options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+        });
+        
+       
 
         if (builder.Environment.IsDevelopment()) {
             // Add user secrets for development
@@ -109,7 +108,12 @@ public class Program {
         builder.Services.AddScoped<ICompetitionRepository, MySqlCompetitionRepository>();
         builder.Services.AddScoped<ICompetitionNotificationService, CompetitionNotificationService>();
         builder.Services.AddScoped<ILeaderboardService, LeaderboardService>();
+        builder.Services.AddScoped<IParticipationGroupRepository, ParticipationGroupRepository>();
+        builder.Services.AddScoped<IDisciplineRepository, DisciplineRepository>();
+        builder.Services.AddScoped<IOrganizationRepository, MySqlOrganizationRepository>();
+        builder.Services.AddScoped<IParticipationRepository, ParticipationRepository>();
 
+        
         builder.Services.AddSignalR(options => {
             options.EnableDetailedErrors = true;
             options.MaximumReceiveMessageSize = 102400; // 100 KB

@@ -1,4 +1,4 @@
-import { createApi } from '../utils/api';
+import { createApi } from './api';
 
 export const getCompetitions = async (auth) => {
 	if (!auth.userId) throw new Error('User not authenticated');
@@ -10,11 +10,8 @@ export const getCompetitions = async (auth) => {
 export const getCompetition = async (id, auth = null) => {
 	if (auth) {
 		const api = createApi(auth.token, auth.handleUnauthorized);
-		return api.get(`/competition/${id}`);
+		return api.get(`/competitions/${id}`);
 	}
-	// For public access without auth
-	const api = createApi();
-	return api.get(`/competition/${id}`);
 };
 
 export const updateCompetition = async (id, competitionData, auth) => {
@@ -51,4 +48,24 @@ export const deleteUser = async (userId, auth) => {
 export const deleteCompetition = async (id, auth) => {
 	const api = createApi(auth.token, auth.handleUnauthorized);
 	return api.delete(`/competition/${id}`);
+};
+
+export const getOwnedOrganizations = async (userId, token) => {
+	const api = createApi(token);
+	return api.get(`/users/${userId}/owned-organizations`);
+};
+
+export const getCompetitionsByOrganization = async (organizationId, auth) => {
+	const api = createApi(auth?.token, auth?.handleUnauthorized);
+	return api.get(`/organizations/${organizationId}/competitions`);
+};
+
+export const updateParticipation = async (id, participationData, auth) => {
+	const api = createApi(auth.token, auth.handleUnauthorized);
+	return api.put(`/participations/${id}`, participationData);
+};
+
+export const getCompetitionLeaderboards = async (id, auth = null) => {
+    const api = auth ? createApi(auth.token, auth.handleUnauthorized) : createApi();
+    return api.get(`/competitions/${id}/leaderboards`);
 };

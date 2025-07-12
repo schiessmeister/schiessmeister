@@ -1,5 +1,5 @@
 import { Link, useParams } from 'react-router-dom';
-import { useData } from '../context/DataContext';
+import { useData } from '../../context/DataContext';
 import { Button } from '@/components/ui/button';
 import { TreeView } from '@/components/tree-view';
 import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from '@/components/ui/dialog';
@@ -44,7 +44,7 @@ const DisziplinenList = ({ disciplines, onEdit, onRemove }) => (
     <ul>
       {disciplines.map((d, i) => (
         <li key={i} className="flex items-center gap-2 mb-1">
-          <span>{d.name}</span>
+          <span>{d.name || d}</span>
           {onEdit && <Button type="button" size="icon" variant="ghost" onClick={() => onEdit(i)}>✏️</Button>}
           {onRemove && <Button type="button" size="icon" variant="ghost" onClick={() => onRemove(i)}>🗑️</Button>}
         </li>
@@ -56,7 +56,7 @@ const DisziplinenList = ({ disciplines, onEdit, onRemove }) => (
 const CompetitionDetail = ({ editable = true }) => {
   const { id } = useParams();
   const { competitions, updateCompetition } = useData();
-  const competition = competitions.find((c) => c.id === parseInt(id));
+  const competition = competitions.find((c) => String(c.id) === String(id));
   const [groupsDialogOpen, setGroupsDialogOpen] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [newGroupName, setNewGroupName] = useState('');
@@ -68,13 +68,13 @@ const CompetitionDetail = ({ editable = true }) => {
 
   // Hilfsfunktion: Gruppen aktualisieren und Competition speichern
   const saveGroups = (newGroups) => {
-    updateCompetition(competition.id, { ...competition, participantGroups: newGroups });
+    updateCompetition(competition.id, { ...competition, groups: newGroups });
   };
 
   // Neue Gruppe hinzufügen
   const handleAddGroup = () => {
     if (newGroupName.trim()) {
-      const allGroups = competition.participantGroups || [];
+      const allGroups = competition.groups || [];
       // Finde höchste ID (rekursiv)
       function findMaxId(groups) {
         return groups.reduce((max, g) => {
@@ -122,7 +122,7 @@ const CompetitionDetail = ({ editable = true }) => {
           : { ...g, subParticipationGroups: g.subParticipationGroups ? updateGroup(g.subParticipationGroups, id, newName) : [] }
       );
     }
-    const newGroups = updateGroup(competition.participantGroups || [], editGroup.id, editGroupName);
+    const newGroups = updateGroup(competition.groups || [], editGroup.id, editGroupName);
     saveGroups(newGroups);
     setEditGroupSheetOpen(false);
   };
@@ -139,7 +139,7 @@ const CompetitionDetail = ({ editable = true }) => {
       }
       return null;
     }
-    const group = findGroup(competition.participantGroups || [], groupId);
+    const group = findGroup(competition.groups || [], groupId);
     if (group) {
       setEditGroup(group);
       setEditGroupName(group.title);
@@ -183,7 +183,7 @@ const CompetitionDetail = ({ editable = true }) => {
       <div className="max-w-7xl mx-auto">
         <div className="flex items-center justify-between mb-8 border-b pb-2">
           <div className="flex flex-col">
-            <h2 className="text-3xl font-bold">{competition.name}</h2>
+            <h2 className="text-3xl font-bold">{competition.title}</h2>
             <Button asChild variant="outline" className="mt-2 w-fit">
               <Link to={`${basePath}/competitions/${id}/edit`}>Bearbeiten</Link>
             </Button>
@@ -202,20 +202,26 @@ const CompetitionDetail = ({ editable = true }) => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <div>
                 <label className="block font-medium mb-1">Bezeichnung</label>
-                <input className="w-full border border-gray-300 rounded-md bg-white px-3 py-2 text-black" value={competition.name} readOnly />
+                <input className="w-full border border-gray-300 rounded-md bg-white px-3 py-2 text-black" value={competition.title} readOnly />
               </div>
               <div>
                 <label className="block font-medium mb-1">Datum</label>
-                <input className="w-full border border-gray-300 rounded-md bg-white px-3 py-2 text-black" value={competition.date ? format(new Date(competition.date), 'dd. MMMM yyyy', { locale: de }) : ''} readOnly />
+                <input className="w-full border border-gray-300 rounded-md bg-white px-3 py-2 text-black" value={competition.startDateTime ? format(new Date(competition.startDateTime), 'dd. MMMM yyyy', { locale: de }) : ''} readOnly />
               </div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <KlassenList klassen={competition.klassen || []} />
-              <SchreiberList writers={competition.writers || []} />
+              <KlassenList klassen={competition.availableClasses || []} />
+              <SchreiberList writers={competition.recorders || []} />
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <DisziplinenList disciplines={competition.disciplines || []} />
             </div>
+            {competition.location && (
+              <div className="mt-2 text-sm text-muted-foreground">Ort: {competition.location}</div>
+            )}
+            {competition.announcementUrl && (
+              <div className="mt-2"><a href={competition.announcementUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 underline">Ausschreibung</a></div>
+            )}
           </div>
         </div>
         <Dialog open={groupsDialogOpen} onOpenChange={setGroupsDialogOpen}>
@@ -230,7 +236,7 @@ const CompetitionDetail = ({ editable = true }) => {
               </Button>
             </div>
             <div className="w-full bg-white border rounded-lg p-2 shadow-sm min-h-[80px]">
-              <TreeView data={mapGroupsToTree(competition.participantGroups || [])} />
+              <TreeView data={mapGroupsToTree(competition.groups || [])} />
             </div>
             <DialogFooter className="mt-4">
               <DialogClose asChild>
@@ -255,7 +261,7 @@ const CompetitionDetail = ({ editable = true }) => {
                   onChange={e => setParentGroupId(e.target.value)}
                 >
                   <option value="">(Top-Level)</option>
-                  {flattenGroups(competition.participantGroups || []).map(g => (
+                  {flattenGroups(competition.groups || []).map(g => (
                     <option key={g.id} value={g.id}>{g.label}</option>
                   ))}
                 </select>

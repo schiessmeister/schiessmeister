@@ -1,5 +1,5 @@
-import { useParams, Link } from 'react-router-dom';
-import { useData } from '../context/DataContext';
+import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useData } from '../../context/DataContext';
 import { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -9,9 +9,7 @@ import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover
 import { ChevronDownIcon, Calendar as CalendarIcon, Plus, Pencil, Trash2 } from 'lucide-react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { format } from 'date-fns';
-import { Sheet, SheetTrigger, SheetContent, SheetHeader, SheetTitle, SheetClose } from '@/components/ui/sheet';
 import { Select } from '@/components/ui/select';
-import { Drawer, DrawerTrigger, DrawerContent, DrawerHeader, DrawerTitle, DrawerClose } from '@/components/ui/drawer';
 import { ReactSortable } from 'react-sortablejs';
 import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
@@ -19,7 +17,8 @@ const getInitials = (name) => name.split(' ').map((n) => n[0]).join('');
 
 const EditParticipantGroup = () => {
   const { id } = useParams(); // id der Gruppe
-  const { competitions } = useData();
+  const { competitions, updateCompetition } = useData();
+  const navigate = useNavigate();
 
   // Rekursive Hilfsfunktion, um eine Gruppe (und ihre Competition) zu finden
   function findGroupAndCompetition(competitions, groupId) {
@@ -166,6 +165,47 @@ const EditParticipantGroup = () => {
     }
   };
 
+  // Speicher-Handler für die Gruppe
+  function handleSaveGroup() {
+    // Neue Gruppen-Daten
+    const updatedGroup = {
+      ...group,
+      title,
+      startDateTime: dateRange.from,
+      endDateTime: dateRange.to,
+      participations: participations.map(p => ({
+        ...p,
+        shooter: p.shooter,
+        team: p.team,
+        discipline: p.discipline
+      }))
+    };
+
+    // Competition kopieren und Gruppe ersetzen (rekursiv, falls Subgruppen)
+    function replaceGroup(groups) {
+      return groups.map(g => {
+        if (String(g.id) === String(group.id)) {
+          return updatedGroup;
+        } else if (g.subParticipationGroups && g.subParticipationGroups.length > 0) {
+          return {
+            ...g,
+            subParticipationGroups: replaceGroup(g.subParticipationGroups)
+          };
+        } else {
+          return g;
+        }
+      });
+    }
+
+    const updatedCompetition = {
+      ...competition,
+      participantGroups: replaceGroup(competition.participantGroups)
+    };
+
+    updateCompetition(competition.id, updatedCompetition);
+    navigate(`/manager/competitions/${competition.id}`);
+  }
+
   return (
     <main className="max-w-3xl mx-auto mt-8 bg-white rounded-xl border p-8 shadow">
       <div className="mb-6 text-sm text-muted-foreground flex gap-2 items-center flex-wrap">
@@ -288,6 +328,9 @@ const EditParticipantGroup = () => {
           </div>
         </DialogContent>
       </Dialog>
+      <div className="flex justify-end mt-8">
+        <Button variant="default" onClick={handleSaveGroup}>Speichern</Button>
+      </div>
     </main>
   );
 };
