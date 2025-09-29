@@ -1,0 +1,131 @@
+.results-input {
+	max-width: 600px;
+	margin: 0 auto;
+	padding: 20px;
+}
+
+.results-display {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 10px;
+	margin: 20px 0;
+	padding: 15px;
+	background-color: #f8f9fa;
+	border-radius: 8px;
+}
+
+.result-number {
+	display: inline-block;
+	padding: 8px 16px;
+	background-color: #e9ecef;
+	border-radius: 4px;
+	font-size: 1.2em;
+	font-weight: bold;
+}
+
+.result-number--empty {
+	background-color: #dee2e6;
+	color: #6c757d;
+}
+
+.number-pad {
+	margin: 30px 0;
+}
+
+.number-grid {
+	display: grid;
+	grid-template-columns: repeat(5, 1fr);
+	gap: 10px;
+	margin-bottom: 20px;
+}
+
+.number-button {
+	padding: 20px;
+	font-size: 1.5em;
+	border: none;
+	border-radius: 8px;
+	background-color: #e9ecef;
+	cursor: pointer;
+	transition: background-color 0.2s;
+}
+
+.number-button:hover:not(:disabled) {
+	background-color: #dee2e6;
+}
+
+.number-button:disabled {
+	background-color: #dee2e6;
+	cursor: not-allowed;
+	opacity: 0.7;
+}
+
+.number-button--large {
+	grid-column: 1 / -1;
+	background-color: #007bff;
+	color: white;
+}
+
+.number-button--large:hover:not(:disabled) {
+	background-color: #0056b3;
+}
+
+.number-button--large:disabled {
+	background-color: #6c757d;
+}
+
+.button--danger {
+	background-color: #dc3545;
+	color: white;
+}
+
+.button--danger:hover:not(:disabled) {
+	background-color: #c82333;
+}
+
+.button--danger:disabled {
+	background-color: #6c757d;
+	cursor: not-allowed;
+}
+
+.action-buttons {
+	display: flex;
+	gap: 15px;
+	justify-content: flex-end;
+	margin-top: 30px;
+}
+
+.action-buttons .button {
+	height: 45px;
+	min-width: 120px;
+}
+
+.reset-btn {
+	margin: 0 !important;
+}
+
+.shooting-class-select {
+	margin: 1rem 0;
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	margin-block: 40px;
+}
+
+.shooting-class-select label {
+	font-weight: 500;
+}
+
+.shooting-class-select select {
+	padding: 0.5rem;
+	border: 1px solid #ccc;
+	border-radius: 4px;
+	font-size: 1rem;
+	background-color: white;
+	cursor: pointer;
+}
+
+.shooting-class-select select:focus {
+	outline: none;
+	border-color: #007bff;
+	box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+}

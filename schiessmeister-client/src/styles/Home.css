@@ -1,0 +1,43 @@
+.comp-list {
+	display: flex;
+	gap: 5px;
+	flex-direction: column;
+}
+
+.account-actions {
+	margin-top: 2rem;
+	text-align: center;
+	display: flex;
+	gap: 1rem;
+	justify-content: center;
+}
+
+.logout-button {
+	background-color: #6c757d;
+	color: white;
+	border: none;
+	padding: 0.5rem 1rem;
+	border-radius: 4px;
+	cursor: pointer;
+	transition: background-color 0.2s;
+}
+
+.logout-button:hover {
+	background-color: #5a6268;
+	color: white;
+}
+
+.delete-button {
+	background-color: #dc3545;
+	color: white;
+	border: none;
+	padding: 0.5rem 1rem;
+	border-radius: 4px;
+	cursor: pointer;
+	transition: background-color 0.2s;
+}
+
+.delete-button:hover {
+	background-color: #c82333;
+	color: white;
+}
