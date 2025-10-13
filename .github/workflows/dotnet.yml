@@ -39,8 +39,7 @@ jobs:
           echo "Generating license report..."
           dotnet-project-licenses \
             -i ./ \
-            -j \
-            -o license-report-nuget.json
+            -o license-report-nuget.txt
       
       - name: Debug – Print current directory
         run: |
