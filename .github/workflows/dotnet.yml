@@ -40,7 +40,6 @@ jobs:
           dotnet-project-licenses \
             -i ./ \
             -o
-            -l Information
       
       - name: Debug – Print current directory
         run: |
