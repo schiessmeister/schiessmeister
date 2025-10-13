@@ -40,7 +40,6 @@ jobs:
           dotnet-project-licenses \
             -i ./ \
             -o
-            --outfile license-report-nuget.txt
             -f ./
             -l Information
       
