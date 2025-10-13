@@ -54,7 +54,7 @@ jobs:
         run: |
           # The 'end' command collects all data (C# from build) and sends it to SonarQube.
           dotnet sonarscanner end \
-            /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
+            /d:sonar.login="${{ secrets.SONAR_TOKEN }}"
 
       # NuGet License Check
       - name: Check NuGet package licenses
@@ -101,9 +101,9 @@ jobs:
           # Set the base directory relative to the repository root
           projectBaseDir: schiessmeister-client
           args: >
-            -Dsonar.projectKey="schiessmeister-client"
-            -Dsonar.organization="schiessmeister"
-            -Dsonar.sources=.
+            "-Dsonar.projectKey=schiessmeister-client"
+            "-Dsonar.organization=schiessmeister"
+            "-Dsonar.sources=."
 
       - name: Install dependencies
         run: npm ci
