@@ -40,10 +40,10 @@ jobs:
           dotnet sonarscanner begin \
             /k:"${{ github.event.inputs.project_key }}" \
             /o:"schiessmeister" \
+            /d:sonar.projektKey="schiessmeister-csharp"
             /d:sonar.token="${{ secrets.SONAR_TOKEN }}" \
             /d:sonar.sourceEncoding=UTF-8 \
             /d:sonar.sources=. \
-            /d:sonar.projektKey="schiessmeister-csharp"
 
       - name: Build
         run: dotnet build --no-restore
@@ -94,7 +94,7 @@ jobs:
           cache-dependency-path: ./schiessmeister-client/package-lock.json
 
       - name: Sonar Analysis Scan (Client)
-        uses: SonarSource/sonarcloud-scan-action@v2.4
+        uses: SonarSource/sonarqube-scan-action@v2.4
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         with:
