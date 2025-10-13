@@ -41,7 +41,6 @@ jobs:
             -i ./schiessmeister-csharp.csproj \
             -j \
             -o license-report-nuget.json
-            -t
 
       # Enforce allowed licenses
       - name: Enforce allowed licenses
