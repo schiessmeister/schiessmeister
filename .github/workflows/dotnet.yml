@@ -84,7 +84,7 @@ jobs:
 
       - name: Generate license report
         run: |
-          npx license-checker-rseidelsohn --json > ./schiessmeister-client/license-report.json
+          npx license-checker-rseidelsohn --json > license-report.json
 
       - name: Upload license report
         uses: actions/upload-artifact@v4
