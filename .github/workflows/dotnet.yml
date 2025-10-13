@@ -48,6 +48,12 @@ jobs:
           pwd
           echo "Files in this directory:"
           ls -lah
+
+          echo ""
+          echo "Repository root directory (GITHUB_WORKSPACE):"
+          echo $GITHUB_WORKSPACE
+          echo "Files in repository root:"
+          ls -lah $GITHUB_WORKSPACE
     
       - name: Upload NuGet license report
         uses: actions/upload-artifact@v4
