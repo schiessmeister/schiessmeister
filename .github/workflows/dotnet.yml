@@ -20,6 +20,21 @@ jobs:
       run: dotnet restore
     - name: Build
       run: dotnet build --no-restore
+    - name: Check NuGet package licenses
+      run: |
+        echo "Installing dotnet-project-licenses..."
+        dotnet tool install --global dotnet-project-licenses
+        export PATH="$PATH:$HOME/.dotnet/tools"
+        echo "Checking NuGet package licenses..."
+        dotnet-project-licenses \
+          --project ./schiessmeister-csharp/schiessmeister-csharp.csproj \
+          --output license-report-nuget.json \
+          --allowedLicenses "MIT,Apache-2.0,BSD-2-Clause,BSD-3-Clause"
+    - name: Upload NuGet license report
+      uses: actions/upload-artifact@v4
+      with:
+        name: nuget-license-report
+        path: ./schiessmeister-csharp/license-report-nuget.json
 
   frontend:
     runs-on: ubuntu-latest
