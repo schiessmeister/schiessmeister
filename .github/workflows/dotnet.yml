@@ -38,7 +38,7 @@ jobs:
         run: |
           # The 'begin' command starts the data collection process
           dotnet sonarscanner begin \
-            /k:"${{ github.event.inputs.project_key }}" \
+            /k:"schiessmeister-chsarp" \
             /o:"schiessmeister" \
             /d:sonar.projektKey="schiessmeister-csharp"
             /d:sonar.token="${{ secrets.SONAR_TOKEN }}" \
@@ -94,7 +94,7 @@ jobs:
           cache-dependency-path: ./schiessmeister-client/package-lock.json
 
       - name: Sonar Analysis Scan (Client)
-        uses: SonarSource/sonarqube-scan-action@v2.4
+        uses: SonarSource/sonarqube-scan-action
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         with:
