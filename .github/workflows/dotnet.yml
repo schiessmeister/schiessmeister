@@ -12,6 +12,9 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 
+          ref: ${{ github.event.inputs.branch }}
 
       - name: Setup .NET 8
         uses: actions/setup-dotnet@v4
@@ -26,8 +29,33 @@ jobs:
       - name: Restore dependencies
         run: dotnet restore
 
+      - name: Install SonarScanner for .NET
+        run: dotnet tool install --global dotnet-sonarscanner --version 6.3.0
+
+      - name: Begin Sonar Analysis (C#)
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: |
+          # The 'begin' command starts the data collection process
+          dotnet sonarscanner begin \
+            /k:"${{ github.event.inputs.project_key }}" \
+            /o:"schiessmeister" \
+            /d:sonar.token="${{ secrets.SONAR_TOKEN }}" \
+            /d:sonar.branch.name="${{ github.event.inputs.branch }}" \
+            /d:sonar.sourceEncoding=UTF-8 \
+            /d:sonar.sources=. \
+            /d:sonar.projektKey="schiessmeister-csharp"
+
       - name: Build
         run: dotnet build --no-restore
+
+      - name: End Sonar Analysis
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: |
+          # The 'end' command collects all data (C# from build) and sends it to SonarQube.
+          dotnet sonarscanner end \
+            /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
 
       # NuGet License Check
       - name: Check NuGet package licenses
@@ -40,20 +68,7 @@ jobs:
           dotnet-project-licenses \
             -i ./ \
             -o
-      
-      - name: Debug – Print current directory
-        run: |
-          echo "Current working directory:"
-          pwd
-          echo "Files in this directory:"
-          ls -lah
 
-          echo ""
-          echo "Repository root directory (GITHUB_WORKSPACE):"
-          echo $GITHUB_WORKSPACE
-          echo "Files in repository root:"
-          ls -lah $GITHUB_WORKSPACE
-    
       - name: Upload NuGet license report
         uses: actions/upload-artifact@v4
         with:
@@ -68,6 +83,9 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 
+          ref: ${{ github.event.inputs.branch }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -75,6 +93,21 @@ jobs:
           node-version: 22
           cache: npm
           cache-dependency-path: ./schiessmeister-client/package-lock.json
+
+      - name: Sonar Analysis Scan (Client)
+        uses: SonarSource/sonarcloud-github-action@v2.4
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        with:
+          # Set the base directory relative to the repository root
+          projectBaseDir: schiessmeister-client
+          args: >
+            -Dsonar.projectKey="schiessmeister-client"
+            -Dsonar.organization="schiessmeister"
+            # Explicitly set sources relative to the projectBaseDir, '.' means the projectBaseDir
+            -Dsonar.sources=.
+            # If you need to set the branch manually (optional, often handled by action)
+            -Dsonar.branch.name="${{ github.event.inputs.branch }}"
 
       - name: Install dependencies
         run: npm ci
