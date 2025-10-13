@@ -41,7 +41,7 @@ jobs:
             /k:"schiessmeister-chsarp" \
             /o:"schiessmeister" \
             /d:sonar.projektKey="schiessmeister-csharp"
-            /d:sonar.token="${{ secrets.SONAR_TOKEN }}" \
+            /d:sonar.login="${{ secrets.SONAR_TOKEN }}" \
             /d:sonar.sourceEncoding=UTF-8 \
             /d:sonar.sources=. \
 
@@ -103,7 +103,6 @@ jobs:
           args: >
             -Dsonar.projectKey="schiessmeister-client"
             -Dsonar.organization="schiessmeister"
-            # Explicitly set sources relative to the projectBaseDir, '.' means the projectBaseDir
             -Dsonar.sources=.
 
       - name: Install dependencies
