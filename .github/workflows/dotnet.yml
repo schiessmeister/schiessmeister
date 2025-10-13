@@ -38,7 +38,7 @@ jobs:
       
           echo "Generating license report..."
           dotnet-project-licenses \
-            -i ./schiessmeister-csharp.csproj \
+            -i schiessmeister-csharp.csproj \
             -j \
             -o license-report-nuget.json
 
