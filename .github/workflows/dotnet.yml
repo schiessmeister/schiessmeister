@@ -39,7 +39,10 @@ jobs:
           echo "Generating license report..."
           dotnet-project-licenses \
             -i ./ \
-            -o license-report-nuget.txt
+            -o
+            --outfile license-report-nuget.txt
+            -f ./
+            -l Information
       
       - name: Debug – Print current directory
         run: |
@@ -58,7 +61,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: nuget-license-report
-          path: ./schiessmeister-csharp/license-report-nuget.json
+          path: ./schiessmeister-csharp/license-report-nuget.txt
 
   frontend:
     runs-on: ubuntu-latest
