@@ -11,57 +11,83 @@ jobs:
         working-directory: ./schiessmeister-csharp
 
     steps:
-    - uses: actions/checkout@v4
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v4
-      with:
-        dotnet-version: 8.0.x
-    - name: Restore dependencies
-      run: dotnet restore
-    - name: Build
-      run: dotnet build --no-restore
-    - name: Check NuGet package licenses
-      run: |
-        echo "Installing dotnet-project-licenses..."
-        dotnet tool install --global dotnet-project-licenses
-        export PATH="$PATH:$HOME/.dotnet/tools"
-        echo "Checking NuGet package licenses..."
-        dotnet-project-licenses \
-          --project ./schiessmeister-csharp/schiessmeister-csharp.csproj \
-          --output license-report-nuget.json \
-          --allowedLicenses "MIT,Apache-2.0,BSD-2-Clause,BSD-3-Clause"
-    - name: Upload NuGet license report
-      uses: actions/upload-artifact@v4
-      with:
-        name: nuget-license-report
-        path: ./schiessmeister-csharp/license-report-nuget.json
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --no-restore
+
+      # NuGet License Check
+      - name: Check NuGet package licenses
+        run: |
+          echo "Installing dotnet-project-licenses..."
+          dotnet tool install --global dotnet-project-licenses
+          export PATH="$PATH:$HOME/.dotnet/tools"
+
+          echo "Generating license report..."
+          dotnet-project-licenses \
+            --project ./schiessmeister-csharp/schiessmeister-csharp.csproj \
+            --output ./schiessmeister-csharp/license-report-nuget.json \
+            --allowedLicenses "MIT,Apache-2.0,BSD-2-Clause,BSD-3-Clause"
+
+      # Enforce allowed licenses
+      - name: Enforce allowed licenses
+        run: |
+          if jq -e '.Projects[].Packages[] | select(.LicenseExpression | test("GPL"; "i"))' ./schiessmeister-csharp/license-report-nuget.json > /dev/null; then
+            echo "Disallowed GPL licenses detected in NuGet packages!"
+            jq '.Projects[].Packages[] | select(.LicenseExpression | test("GPL"; "i")) | {Name, LicenseExpression}' ./schiessmeister-csharp/license-report-nuget.json
+            exit 1
+          else
+            echo "All NuGet licenses are compliant."
+          fi
+
+      - name: Upload NuGet license report
+        uses: actions/upload-artifact@v4
+        with:
+          name: nuget-license-report
+          path: ./schiessmeister-csharp/license-report-nuget.json
 
   frontend:
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: ./schiessmeister-client
+
     steps:
-    - uses: actions/checkout@v4
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: 22
-        cache: npm
-        cache-dependency-path: ./schiessmeister-client/package-lock.json
-    - name: Install dependencies
-      run: npm ci
-    - name: Build
-      run: npm run build
-    - name: Check npm licenses
-      run: |
-        echo "Checking npm package licenses..."
-        npx license-checker-rseidelsohn --summary --failOn "GPL" --production
-    - name: Generate license report
-      run: |
-        npx license-checker-rseidelsohn --json > license-report.json
-    - name: Upload license report
-      uses: actions/upload-artifact@v4
-      with:
-        name: npm-license-report
-        path: ./schiessmeister-client/license-report.json
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: ./schiessmeister-client/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      # npm License Check
+      - name: Check npm licenses
+        run: |
+          echo "Checking npm package licenses..."
+          npx license-checker-rseidelsohn --summary --failOn "GPL" --production
+
+      - name: Generate license report
+        run: |
+          npx license-checker-rseidelsohn --json > ./schiessmeister-client/license-report.json
+
+      - name: Upload license report
+        uses: actions/upload-artifact@v4
+        with:
+          name: npm-license-report
+          path: ./schiessmeister-client/license-report.json
