@@ -52,7 +52,14 @@ jobs:
           else
             echo "All NuGet licenses are compliant."
           fi
-
+      
+      - name: Debug – Print current directory
+        run: |
+          echo "Current working directory:"
+          pwd
+          echo "Files in this directory:"
+          ls -lah
+    
       - name: Upload NuGet license report
         uses: actions/upload-artifact@v4
         with:
