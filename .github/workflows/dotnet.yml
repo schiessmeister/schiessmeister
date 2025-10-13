@@ -94,7 +94,7 @@ jobs:
           cache-dependency-path: ./schiessmeister-client/package-lock.json
 
       - name: Sonar Analysis Scan (Client)
-        uses: SonarSource/sonarqube-scan-action
+        uses: SonarSource/sonarqube-scan-action@v6.0.0
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         with:
