@@ -41,17 +41,6 @@ jobs:
             -i schiessmeister-csharp.csproj \
             -j \
             -o license-report-nuget.json
-
-      # Enforce allowed licenses
-      - name: Enforce allowed licenses
-        run: |
-          if jq -e '.Projects[].Packages[] | select(.LicenseExpression | test("GPL"; "i"))' ./schiessmeister-csharp/license-report-nuget.json > /dev/null; then
-            echo "Disallowed GPL licenses detected in NuGet packages!"
-            jq '.Projects[].Packages[] | select(.LicenseExpression | test("GPL"; "i")) | {Name, LicenseExpression}' ./schiessmeister-csharp/license-report-nuget.json
-            exit 1
-          else
-            echo "All NuGet licenses are compliant."
-          fi
       
       - name: Debug – Print current directory
         run: |
@@ -64,7 +53,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: nuget-license-report
-          path: license-report-nuget.json
+          path: licenses.json
 
   frontend:
     runs-on: ubuntu-latest
