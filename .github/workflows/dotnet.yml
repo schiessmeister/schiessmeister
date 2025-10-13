@@ -30,7 +30,7 @@ jobs:
         run: dotnet restore
 
       - name: Install SonarScanner for .NET
-        run: dotnet tool install --global dotnet-sonarscanner --version 6.3.0
+        run: dotnet tool install --global dotnet-sonarscanner
 
       - name: Begin Sonar Analysis (C#)
         env:
@@ -95,7 +95,7 @@ jobs:
           cache-dependency-path: ./schiessmeister-client/package-lock.json
 
       - name: Sonar Analysis Scan (Client)
-        uses: SonarSource/sonarcloud-github-action@v2.4
+        uses: SonarSource/sonarcloud-github-action@v6.0.0
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         with:
