@@ -57,7 +57,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: nuget-license-report
-          path: ./schiessmeister-csharp/license-report-nuget.json
+          path: license-report-nuget.json
 
   frontend:
     runs-on: ubuntu-latest
