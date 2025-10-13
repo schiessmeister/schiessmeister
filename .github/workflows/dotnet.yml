@@ -38,3 +38,15 @@ jobs:
       run: npm ci
     - name: Build
       run: npm run build
+    - name: Check npm licenses
+      run: |
+        echo "Checking npm package licenses..."
+        npx license-checker-rseidelsohn --summary --failOn "GPL" --production
+    - name: Generate license report
+      run: |
+        npx license-checker-rseidelsohn --json > license-report.json
+    - name: Upload license report
+      uses: actions/upload-artifact@v4
+      with:
+        name: npm-license-report
+        path: ./schiessmeister-client/license-report.json
