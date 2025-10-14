@@ -38,7 +38,7 @@ jobs:
         run: |
           # The 'begin' command starts the data collection process
           dotnet sonarscanner begin \
-            /k:"schiessmeister-chsarp" \
+            /k:"schiessmeister-csharp" \
             /o:"schiessmeister" \
             /d:sonar.projektKey="schiessmeister-csharp" \
             /d:sonar.login="${{ secrets.SONAR_TOKEN }}" \
