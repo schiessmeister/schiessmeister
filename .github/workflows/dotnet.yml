@@ -40,10 +40,10 @@ jobs:
           dotnet sonarscanner begin \
             /k:"schiessmeister-chsarp" \
             /o:"schiessmeister" \
-            /d:sonar.projektKey="schiessmeister-csharp"
+            /d:sonar.projektKey="schiessmeister-csharp" \
             /d:sonar.login="${{ secrets.SONAR_TOKEN }}" \
             /d:sonar.sourceEncoding=UTF-8 \
-            /d:sonar.sources=. \
+            /d:sonar.sources=.
 
       - name: Build
         run: dotnet build --no-restore
