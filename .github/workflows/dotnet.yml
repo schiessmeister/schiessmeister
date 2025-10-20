@@ -50,7 +50,7 @@ jobs:
 
       - name: Run Unit Tests
         run: |
-          dotnet test ./schiessmeister-csharp-tests/schiessmeister-csharp-tests.csproj \
+          dotnet test ../schiessmeister-csharp-tests/schiessmeister-csharp-tests.csproj \
             --no-build \
             --verbosity normal \
             --logger "console;verbosity=detailed" \
