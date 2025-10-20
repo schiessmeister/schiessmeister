@@ -49,9 +49,8 @@ jobs:
         run: dotnet build --no-restore
 
       - name: Run Unit Tests
-        run: |
-          # Run all tests in the solution and fail the job if any test fails
-          dotnet test --no-build --verbosity normal
+        run: dotnet test ./schiessmeister-csharp-tests/schiessmeister-csharp-tests.csproj \
+            --no-build --verbosity normal --logger "console;verbosity=detailed"
 
       - name: End Sonar Analysis
         env:
