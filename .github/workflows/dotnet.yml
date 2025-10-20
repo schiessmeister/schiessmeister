@@ -48,6 +48,15 @@ jobs:
       - name: Build
         run: dotnet build --no-restore
 
+      - name: Debug - Print Working Directory and Contents
+        run: |
+          echo "Current working directory (pwd):"
+          pwd
+          echo "Contents of the current working directory (ls -F):"
+          ls -F
+          echo "Contents of the parent directory (ls -F ..):"
+          ls -F ..
+
       - name: Run Unit Tests
         run: dotnet test ../schiessmeister-csharp-tests/schiessmeister-csharp-tests.csproj --verbosity normal --logger "console;verbosity=detailed"
 
