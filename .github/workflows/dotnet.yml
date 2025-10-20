@@ -48,6 +48,11 @@ jobs:
       - name: Build
         run: dotnet build --no-restore
 
+      - name: Run Unit Tests
+        run: |
+          # Run all tests in the solution and fail the job if any test fails
+          dotnet test --no-build --verbosity normal
+
       - name: End Sonar Analysis
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
