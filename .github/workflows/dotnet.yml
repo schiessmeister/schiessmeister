@@ -47,10 +47,11 @@ jobs:
 
       - name: Build
         run: dotnet build --no-restore
-      
+
       - name: Run Unit Tests
-        working-directory: ./schiessmeister-csharp-tests
-        run: dotnet test --verbosity normal --logger "console;verbosity=detailed"
+        run: dotnet test ../schiessmeister-csharp-tests/schiessmeister-csharp-tests.csproj \
+             --verbosity normal \
+             --logger "console;verbosity=detailed"
 
       - name: End Sonar Analysis
         env:
