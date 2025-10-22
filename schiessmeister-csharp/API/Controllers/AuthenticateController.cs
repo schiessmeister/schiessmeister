@@ -52,7 +52,7 @@ public class AuthenticateController : ControllerBase {
                 model.Username,
                 string.Join(", ", result.Errors.Select(e => e.Description)));
 
-            return BadRequest("User creation failed! Please check user details and try again.")
+            return BadRequest("User creation failed! Please check user details and try again.");
         }
 
         await userManager.AddToRoleAsync(user, "User");
