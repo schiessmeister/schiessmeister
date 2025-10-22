@@ -23,8 +23,12 @@ public class Program {
         builder.Services.AddControllers().AddJsonOptions(options => {
             options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
         });
-        
-       
+
+        var jwtSecret = builder.Configuration["JwtSettings:Secret"];
+        if (string.IsNullOrEmpty(jwtSecret) || jwtSecret.Length < 32) {
+            throw new InvalidOperationException(
+                "JWT Secret must be set and at least 32 characters long");
+        }
 
         if (builder.Environment.IsDevelopment()) {
             // Add user secrets for development
@@ -57,13 +61,15 @@ public class Program {
         #region Auth
 
         builder.Services.AddCors(options => {
-            options.AddPolicy(name: "OpenCorsPolicy",
-                policy => {
-                    policy.WithOrigins("http://localhost:3000")
-                          .AllowAnyMethod()
-                          .AllowAnyHeader()
-                          .AllowCredentials();
-                });
+            options.AddPolicy(name: "OpenCorsPolicy", policy => {
+                var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins")
+                    .Get<string[]>() ?? ["http://localhost:3000"];
+
+                policy.WithOrigins(allowedOrigins)
+                      .AllowAnyMethod()
+                      .AllowAnyHeader()
+                      .AllowCredentials();
+            });
         });
 
         builder.Services.AddIdentity<AppUser, IdentityRole<int>>(options => {
@@ -87,9 +93,11 @@ public class Program {
                     Encoding.ASCII.GetBytes(
                         builder.Configuration["JwtSettings:Secret"]!
                     )),
-                ValidateIssuer = false,
-                ValidateAudience = false,
-                RequireExpirationTime = false,
+                ValidateIssuer = true,
+                ValidIssuer = builder.Configuration["JwtSettings:Issuer"],
+                ValidateAudience = true,
+                ValidAudience = builder.Configuration["JwtSettings:Audience"],
+                RequireExpirationTime = true,
                 ValidateLifetime = true
             };
         });
@@ -116,7 +124,7 @@ public class Program {
 
         
         builder.Services.AddSignalR(options => {
-            options.EnableDetailedErrors = true;
+            options.EnableDetailedErrors = builder.Environment.IsDevelopment();
             options.MaximumReceiveMessageSize = 102400; // 100 KB
             options.ClientTimeoutInterval = TimeSpan.FromSeconds(60);
             options.KeepAliveInterval = TimeSpan.FromSeconds(15);

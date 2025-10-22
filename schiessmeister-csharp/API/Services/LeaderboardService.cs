@@ -30,6 +30,11 @@ public class LeaderboardService : ILeaderboardService {
     }
 
     private List<Leaderboard> GenerateLeaderboards(Competition competition) {
+        if (competition.Participations.Any(p => p.Shooter == null)) {
+            throw new InvalidOperationException(
+                "Cannot generate leaderboards: Some participations have no shooter");
+        }
+
         List<Leaderboard> leaderboards = [];
 
         var participationsByDiscipline = competition.Participations
@@ -55,7 +60,7 @@ public class LeaderboardService : ILeaderboardService {
                         ShooterClass = participation.ShooterClass,
                         Team = participation.Team,
                         DqStatus = participation.DqStatus,
-                        TotalScore = participation.Result.TotalPoints
+                        TotalScore = participation.Result?.TotalPoints ?? 0
                     });
                 }
 
