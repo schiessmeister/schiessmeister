@@ -20,7 +20,38 @@ export const createApi = (token = null, handleUnauthorized = null) => {
 		}
 
 		if (!response.ok) {
-			throw new Error(`HTTP error! status: ${response.status}`);
+			let errorMessage = `HTTP error! status: ${response.status}`;
+			let errorData = null;
+			try {
+				// First, read the response as text
+				const responseText = await response.text();
+				if (responseText) {
+					try {
+						// Try to parse as JSON
+						errorData = JSON.parse(responseText);
+						if (Array.isArray(errorData)) {
+							// Handle Identity errors format: [{code: "...", description: "..."}]
+							errorMessage = errorData.map((err) => err.description || err.code).join(', ');
+						} else if (errorData.message) {
+							errorMessage = errorData.message;
+						} else if (typeof errorData === 'string') {
+							errorMessage = errorData;
+						}
+					} catch {
+						// If JSON parsing fails, use the text as error message
+						errorMessage = responseText;
+						errorData = responseText;
+					}
+				}
+			} catch {
+				// If reading response fails, keep the default error message
+			}
+			const error = new Error(errorMessage);
+			error.status = response.status;
+			error.data = errorData;
+			// Ensure message is accessible
+			error.toString = () => errorMessage;
+			throw error;
 		}
 
 		// Handle 204 No Content responses
@@ -28,7 +59,21 @@ export const createApi = (token = null, handleUnauthorized = null) => {
 			return null;
 		}
 
-		return response.json();
+		// Try to parse response, handle both JSON and text
+		try {
+			const responseText = await response.text();
+			if (!responseText) {
+				return null;
+			}
+			try {
+				return JSON.parse(responseText);
+			} catch {
+				// If not JSON, return the text as-is
+				return responseText;
+			}
+		} catch {
+			return null;
+		}
 	};
 
 	return {

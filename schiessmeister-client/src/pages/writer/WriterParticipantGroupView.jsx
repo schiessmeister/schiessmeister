@@ -5,14 +5,19 @@ import { useMemo, useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { updateParticipation, getCompetition } from '../../api/apiClient';
 import { useAuth } from '../../context/AuthContext';
+import { canEditParticipations } from '../../utils/permissions';
 
 const WriterParticipantGroupView = () => {
   const { competitionId, groupId } = useParams();
   const navigate = useNavigate();
   const { competitions, updateCompetition } = useData();
+  const { ownedOrganizations, userId } = useAuth();
   const competition = competitions.find(c => String(c.id) === String(competitionId));
   const groups = competition?.groups || [];
   const group = groups.find(g => String(g.id) === String(groupId));
+
+  // Permission check
+  const canEdit = competition && canEditParticipations(competition, ownedOrganizations, userId);
 
   // Dialog-State für Ergebnisse eintragen
   const [resultDialogOpen, setResultDialogOpen] = useState(false);
@@ -22,7 +27,7 @@ const WriterParticipantGroupView = () => {
   // Alle Gruppen für das Dropdown
   const handleGroupChange = (e) => {
     const newGroupId = e.target.value;
-    navigate(`/writer/competitions/${competitionId}/participationGroups/${newGroupId}`);
+    navigate(`/competitions/${competitionId}/participationGroups/${newGroupId}`);
   };
 
   // Teilnehmer sortieren nach Rang (z.B. Punkte, wie im Manager-Leaderboard)
@@ -90,17 +95,22 @@ const WriterParticipantGroupView = () => {
 
   useEffect(() => {
     if (!group || !Array.isArray(group.participations)) {
-      navigate('/login');
+      navigate('/competitions');
     }
-  }, [group, navigate]);
+    // Redirect if user doesn't have permission to edit
+    if (competition && !canEdit) {
+      navigate(`/competitions/${competition.id}`);
+    }
+  }, [group, navigate, competition, canEdit]);
 
   if (!competition || !group) return <div>Keine Gruppe gefunden.</div>;
+  if (!canEdit) return <div>Keine Berechtigung zum Bearbeiten.</div>;
 
   return (
     <main className="max-w-2xl mx-auto mt-8">
       {/* Breadcrumb */}
       <nav className="flex items-center gap-2 text-sm mb-4 text-muted-foreground">
-        <Link to={`/writer/competitions/${competition.id}/participationGroups/${group.id}`} className="hover:underline text-primary font-medium">{competition.title}</Link>
+        <Link to={`/competitions/${competition.id}/participationGroups/${group.id}`} className="hover:underline text-primary font-medium">{competition.title}</Link>
         <span>/</span>
         <span className="font-semibold text-black">{group.title}</span>
       </nav>
@@ -132,7 +142,7 @@ const WriterParticipantGroupView = () => {
         {group.participations.length === 0 && <li className="text-muted-foreground">Keine Teilnehmer</li>}
       </ul>
       <div className="mt-8">
-        <Button variant="secondary" onClick={() => navigate(`/writer/competitions`)}>
+        <Button variant="secondary" onClick={() => navigate(`/competitions`)}>
           Zurück
         </Button>
       </div>

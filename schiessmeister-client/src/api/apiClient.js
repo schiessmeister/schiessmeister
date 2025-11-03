@@ -1,10 +1,10 @@
 import { createApi } from './api';
 
-export const getCompetitions = async (auth) => {
-	if (!auth.userId) throw new Error('User not authenticated');
+export const getRecordedCompetitions = async (userId, auth) => {
+	if (!userId) throw new Error('User not authenticated');
 
 	const api = createApi(auth.token, auth.handleUnauthorized);
-	return api.get(`/users/${auth.userId}/competitions`);
+	return api.get(`/users/${userId}/recorded-competitions`);
 };
 
 export const getCompetition = async (id, auth = null) => {
@@ -66,6 +66,6 @@ export const updateParticipation = async (id, participationData, auth) => {
 };
 
 export const getCompetitionLeaderboards = async (id, auth = null) => {
-    const api = auth ? createApi(auth.token, auth.handleUnauthorized) : createApi();
-    return api.get(`/competitions/${id}/leaderboards`);
+	const api = auth ? createApi(auth.token, auth.handleUnauthorized) : createApi();
+	return api.get(`/competitions/${id}/leaderboards`);
 };

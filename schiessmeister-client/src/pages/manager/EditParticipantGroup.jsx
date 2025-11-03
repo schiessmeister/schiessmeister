@@ -1,6 +1,7 @@
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useData } from '../../context/DataContext';
-import { useState } from 'react';
+import { useAuth } from '../../context/AuthContext';
+import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -12,12 +13,14 @@ import { format } from 'date-fns';
 import { Select } from '@/components/ui/select';
 import { ReactSortable } from 'react-sortablejs';
 import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { canEditParticipations } from '../../utils/permissions';
 
 const getInitials = (name) => name.split(' ').map((n) => n[0]).join('');
 
 const EditParticipantGroup = () => {
   const { id } = useParams(); // id der Gruppe
   const { competitions, updateCompetition } = useData();
+  const { ownedOrganizations, userId } = useAuth();
   const navigate = useNavigate();
 
   // Rekursive Hilfsfunktion, um eine Gruppe (und ihre Competition) zu finden
@@ -43,6 +46,18 @@ const EditParticipantGroup = () => {
   const found = findGroupAndCompetition(competitions, id);
   if (!found) return <div>Gruppe nicht gefunden</div>;
   const { competition, group } = found;
+
+  // Permission check
+  const canEdit = competition && canEditParticipations(competition, ownedOrganizations, userId);
+
+  // Redirect if no permission
+  useEffect(() => {
+    if (competition && !canEdit) {
+      navigate(`/competitions/${competition.id}`);
+    }
+  }, [competition, canEdit, navigate]);
+
+  if (!canEdit) return <div>Keine Berechtigung zum Bearbeiten.</div>;
 
   // Map group participations (IDs) to full participation objects
   const groupParticipations = Array.isArray(group.participations)
@@ -203,13 +218,13 @@ const EditParticipantGroup = () => {
     };
 
     updateCompetition(competition.id, updatedCompetition);
-    navigate(`/manager/competitions/${competition.id}`);
+    navigate(`/competitions/${competition.id}`);
   }
 
   return (
     <main className="max-w-3xl mx-auto mt-8 bg-white rounded-xl border p-8 shadow">
       <div className="mb-6 text-sm text-muted-foreground flex gap-2 items-center flex-wrap">
-        <Link to={`/manager/competitions/${competition.id}`} className="hover:underline text-black">{competition.name}</Link>
+        <Link to={`/competitions/${competition.id}`} className="hover:underline text-black">{competition.name}</Link>
         <span>/</span>
         {groupHierarchy.map((g, idx) => (
           <span key={g.id} className="flex items-center gap-2">

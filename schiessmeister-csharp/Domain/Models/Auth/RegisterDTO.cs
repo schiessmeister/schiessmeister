@@ -16,6 +16,8 @@ public class RegisterDTO {
     [Required(ErrorMessage = "Gender is required")]
     public string Gender { get; set; }
 
+    [Required(ErrorMessage = "Birthdate is required")]
+    public DateOnly Birthdate { get; set; }
 
     [Required(ErrorMessage = "Email is required")]
     public string Email { get; set; }

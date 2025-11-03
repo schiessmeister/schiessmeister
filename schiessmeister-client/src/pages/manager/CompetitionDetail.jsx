@@ -1,5 +1,6 @@
 import { Link, useParams } from 'react-router-dom';
 import { useData } from '../../context/DataContext';
+import { useAuth } from '../../context/AuthContext';
 import { Button } from '@/components/ui/button';
 import { TreeView } from '@/components/tree-view';
 import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from '@/components/ui/dialog';
@@ -9,6 +10,7 @@ import { Pencil, Folder, File, Plus, Users } from 'lucide-react';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter, SheetClose } from '@/components/ui/sheet';
+import { canEditCompetitionMeta, canEditParticipations } from '../../utils/permissions';
 
 const KlassenList = ({ klassen, onRemove }) => (
   <div>
@@ -56,6 +58,7 @@ const DisziplinenList = ({ disciplines, onEdit, onRemove }) => (
 const CompetitionDetail = ({ editable = true }) => {
   const { id } = useParams();
   const { competitions, updateCompetition } = useData();
+  const { ownedOrganizations, userId } = useAuth();
   const competition = competitions.find((c) => String(c.id) === String(id));
   const [groupsDialogOpen, setGroupsDialogOpen] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -65,6 +68,10 @@ const CompetitionDetail = ({ editable = true }) => {
   const [editGroupSheetOpen, setEditGroupSheetOpen] = useState(false);
   const [editGroup, setEditGroup] = useState(null);
   const [editGroupName, setEditGroupName] = useState('');
+
+  // Permission checks
+  const canEditMeta = competition && canEditCompetitionMeta(competition, ownedOrganizations);
+  const canEditPoints = competition && canEditParticipations(competition, ownedOrganizations, userId);
 
   // Hilfsfunktion: Gruppen aktualisieren und Competition speichern
   const saveGroups = (newGroups) => {
@@ -154,11 +161,11 @@ const CompetitionDetail = ({ editable = true }) => {
       name: g.title,
       icon: g.subParticipationGroups && g.subParticipationGroups.length > 0 ? Folder : File,
       children: g.subParticipationGroups && g.subParticipationGroups.length > 0 ? mapGroupsToTree(g.subParticipationGroups) : undefined,
-      actions: (
-        <Link to={`/manager/participant-groups/${g.id}/edit`} className="ml-2 align-middle text-muted-foreground hover:text-black transition-colors">
+      actions: canEditPoints ? (
+        <Link to={`/participant-groups/${g.id}/edit`} className="ml-2 align-middle text-muted-foreground hover:text-black transition-colors">
           <Pencil className="w-4 h-4" />
         </Link>
-      ),
+      ) : null,
     }));
   }
 
@@ -176,25 +183,27 @@ const CompetitionDetail = ({ editable = true }) => {
 
   if (!competition) return <div>Wettbewerb nicht gefunden</div>;
 
-  const basePath = '/manager';
-
   return (
     <main className="min-h-screen w-full px-4 py-10 bg-background">
       <div className="max-w-7xl mx-auto">
         <div className="flex items-center justify-between mb-8 border-b pb-2">
           <div className="flex flex-col">
             <h2 className="text-3xl font-bold">{competition.title}</h2>
-            <Button asChild variant="outline" className="mt-2 w-fit">
-              <Link to={`${basePath}/competitions/${id}/edit`}>Bearbeiten</Link>
-            </Button>
+            {canEditMeta && (
+              <Button asChild variant="outline" className="mt-2 w-fit">
+                <Link to={`/competitions/${id}/edit`}>Bearbeiten</Link>
+              </Button>
+            )}
           </div>
           <div className="flex flex-col items-end gap-2">
             <Button asChild variant="outline" className="ml-4">
-              <Link to={`${basePath}/competitions/${id}/leaderboard`}>Leaderboard öffnen</Link>
+              <Link to={`/competitions/${id}/leaderboard`}>Leaderboard öffnen</Link>
             </Button>
-            <Button variant="outline" className="w-fit flex items-center gap-2 mt-2" onClick={() => { setGroupsDialogOpen(true); }}>
-              <Users className="h-4 w-4" /> Teilnehmergruppen verwalten
-            </Button>
+            {canEditPoints && (
+              <Button variant="outline" className="w-fit flex items-center gap-2 mt-2" onClick={() => { setGroupsDialogOpen(true); }}>
+                <Users className="h-4 w-4" /> Teilnehmergruppen verwalten
+              </Button>
+            )}
           </div>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-start">
@@ -294,7 +303,7 @@ const CompetitionDetail = ({ editable = true }) => {
         </Dialog>
         <div className="flex justify-between mt-16">
           <Button asChild variant="outline">
-            <Link to={`${basePath}/competitions`}>Zurück</Link>
+            <Link to="/competitions">Zurück</Link>
           </Button>
         </div>
       </div>
