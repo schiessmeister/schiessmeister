@@ -34,7 +34,9 @@ public class JwtService : ITokenService {
         var token = new JwtSecurityToken(
             expires: DateTime.Now.AddDays(15),
             claims: authClaims,
-            signingCredentials: new SigningCredentials(authSigningKey, SecurityAlgorithms.HmacSha256)
+            signingCredentials: new SigningCredentials(authSigningKey, SecurityAlgorithms.HmacSha256),
+            issuer: configuration["JwtSettings:Issuer"],
+            audience: configuration["JwtSettings:Audience"]
         );
 
         return new TokenDTO() {

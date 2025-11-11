@@ -34,7 +34,7 @@ public class ParticipationGroupController : ControllerBase {
             return Forbid();
 
         if (newGroup.SubGroups.Count > 0 && newGroup.Participations.Count > 0)
-            return BadRequest("A participation group cannot have both subgrous and participations.");
+            return BadRequest("A participation group cannot have both subgroups and participations.");
 
         newGroup.Id = id;
 
@@ -95,7 +95,7 @@ public class ParticipationGroupController : ControllerBase {
             return Forbid();
 
         if (newSubGroup.SubGroups.Count > 0 && newSubGroup.Participations.Count > 0)
-            return BadRequest("A participation group cannot have both subgrous and participations.");
+            return BadRequest("A participation group cannot have both subgroups and participations.");
 
         newSubGroup.ParentGroupId = id;
         newSubGroup.CompetitionId = participationGroup.CompetitionId;

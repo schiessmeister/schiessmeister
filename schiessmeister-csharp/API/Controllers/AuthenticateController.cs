@@ -11,10 +11,12 @@ namespace schiessmeister_csharp.API.Controllers;
 public class AuthenticateController : ControllerBase {
     private readonly UserManager<AppUser> userManager;
     private readonly ITokenService tokenService;
+    private readonly ILogger<AuthenticateController> _logger;
 
-    public AuthenticateController(UserManager<AppUser> userManager, IConfiguration _, ITokenService tokenService) {
+    public AuthenticateController(UserManager<AppUser> userManager, IConfiguration _, ITokenService tokenService, ILogger<AuthenticateController> logger) {
         this.userManager = userManager;
         this.tokenService = tokenService;
+        this._logger = logger;
     }
 
     [HttpPost("login")]
@@ -46,15 +48,13 @@ public class AuthenticateController : ControllerBase {
 
         IdentityResult result = await userManager.CreateAsync(user, model.Password);
 
-        if (result.Errors.Any())
-            return BadRequest(result.Errors);
+        if (!result.Succeeded) {
+            _logger.LogWarning("User creation failed for {Username}: {Errors}",
+                model.Username,
+                string.Join(", ", result.Errors.Select(e => e.Description)));
 
-        foreach (var er in result.Errors) {
-            Console.WriteLine(er.Description);
-        }
-
-        if (!result.Succeeded)
             return BadRequest("User creation failed! Please check user details and try again.");
+        }
 
         await userManager.AddToRoleAsync(user, "User");
 

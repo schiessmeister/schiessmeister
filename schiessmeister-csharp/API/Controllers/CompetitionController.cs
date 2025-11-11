@@ -105,7 +105,7 @@ public class CompetitionController : ControllerBase {
             return BadRequest("A participation group cannot have both a parent group and a competition.");
 
         if (group.SubGroups.Count > 0 && group.Participations.Count > 0)
-            return BadRequest("A participation group cannot have both subgrous and participations.");
+            return BadRequest("A participation group cannot have both subgroups and participations.");
 
         group.CompetitionId = id;
         await _participationGroups.AddAsync(group);
