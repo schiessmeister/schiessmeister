@@ -13,9 +13,10 @@ public class AuthenticateController : ControllerBase {
     private readonly ITokenService tokenService;
     private readonly ILogger<AuthenticateController> _logger;
 
-    public AuthenticateController(UserManager<AppUser> userManager, IConfiguration _, ITokenService tokenService) {
+    public AuthenticateController(UserManager<AppUser> userManager, IConfiguration _, ITokenService tokenService, ILogger<AuthenticateController> logger) {
         this.userManager = userManager;
         this.tokenService = tokenService;
+        this._logger = logger;
     }
 
     [HttpPost("login")]
