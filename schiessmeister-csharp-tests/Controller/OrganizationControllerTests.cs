@@ -86,12 +86,13 @@ namespace schiessmeister_csharp_tests.Controller
         public async Task CreateCompetition_ReturnsCreated_WhenValid()
         {
             var ownerId = 42;
+            var now = new DateTime(2025, 1, 1, 10, 0, 0);
             var newCompetition = new Competition
             {
                 Id = 0,
                 Disciplines = new List<Discipline> { new Discipline { Id = 1 } },
-                StartDateTime = DateTime.Now,
-                EndDateTime = DateTime.Now.AddHours(2)
+                StartDateTime = now,
+                EndDateTime = now.AddHours(2)
             };
 
             _orgRepoMock.Setup(r => r.FindByIdAsync(It.IsAny<int>()))
