@@ -15,6 +15,7 @@ public class MySqlAppUserRepository(MySqlDbContext dbContext) : MySqlRepositoryB
     public async Task<AppUser?> FindByIdWithRecordedCompsAsync(int id) {
         return await _db.AppUsers
             .Include(u => u.RecordedCompetitions)
+                .ThenInclude(c => c.Organizer)
             .FirstOrDefaultAsync(u => u.Id == id);
     }
 

@@ -1,10 +1,15 @@
-﻿namespace schiessmeister_csharp.Domain.Models;
+﻿using System.Text.Json.Serialization;
+
+namespace schiessmeister_csharp.Domain.Models;
 
 public class Leaderboard(string name) {
     public string Name { get; set; } = name;
     public List<LeaderboardEntry> Entries { get; set; } = [];
 }
 
+[JsonPolymorphic(TypeDiscriminatorPropertyName = "$type")]
+[JsonDerivedType(typeof(LeaderboardShooterEntry), typeDiscriminator: "shooter")]
+[JsonDerivedType(typeof(LeaderboardTeamEntry), typeDiscriminator: "team")]
 public abstract class LeaderboardEntry {
     public string Name { get; set; }
     public double TotalScore { get; set; }

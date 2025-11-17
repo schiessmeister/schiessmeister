@@ -11,4 +11,6 @@ public interface ICompetitionRepository : IRepository<Competition> {
     public Task<Competition?> FindByIdWithParticipationsAsync(int id);
 
     public Task<Competition?> FindByIdWithFullParticipationsAsync(int id);
+
+    public Task<Competition?> FindByIdWithOrgAndRecordersAsync(int id);
 }

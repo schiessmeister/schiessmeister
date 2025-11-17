@@ -13,12 +13,15 @@ namespace schiessmeister_csharp.API.Controllers;
 public class OrganizationController : ControllerBase {
     private readonly IOrganizationRepository _organizations;
     private readonly ICompetitionRepository _competitions;
+    private readonly IAppUserRepository _users;
 
     public OrganizationController(
         IOrganizationRepository organizations,
-        ICompetitionRepository competitions) {
+        ICompetitionRepository competitions,
+        IAppUserRepository users) {
         _organizations = organizations;
         _competitions = competitions;
+        _users = users;
     }
 
     [HttpGet("{id}/competitions")]
@@ -51,10 +54,21 @@ public class OrganizationController : ControllerBase {
         if (User.GetUserId() != organization.OwnerId)
             return Forbid();
 
-        if (comp.Disciplines.Count == 0)
+        if (0 == comp.Disciplines.Count)
             return BadRequest("At least one discipline is required.");
 
         comp.OrganizerId = id;
+
+        // Add recorders if RecorderIds are provided.
+        if (comp.RecorderIds != null && comp.RecorderIds.Length > 0) {
+            foreach (int recorderId in comp.RecorderIds) {
+                var recorder = await _users.FindByIdAsync(recorderId);
+                if (recorder != null) {
+                    comp.Recorders.Add(recorder);
+                }
+            }
+        }
+
         comp.Groups.Add(new ParticipationGroup {
             Title = "Default Group",
             StartDateTime = comp.StartDateTime,
@@ -63,9 +77,6 @@ public class OrganizationController : ControllerBase {
 
         var createdCompetition = await _competitions.AddAsync(comp);
 
-        return CreatedAtAction(
-            nameof(CompetitionController.GetCompetition),
-            new { id = createdCompetition.Id },
-            createdCompetition);
+        return Created($"/api/competitions/{createdCompetition.Id}", createdCompetition);
     }
 }

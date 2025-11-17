@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations.Schema;
 using schiessmeister_csharp.Domain.Repositories;
 
 namespace schiessmeister_csharp.Domain.Models;
@@ -25,4 +26,8 @@ public class Competition : IEntity {
         .Select(p => p.Team!)
         .Distinct()
         .ToArray();
+
+    // Non-persisted property for API use - used to update recorders via their IDs.
+    [NotMapped]
+    public int[]? RecorderIds { get; set; }
 }

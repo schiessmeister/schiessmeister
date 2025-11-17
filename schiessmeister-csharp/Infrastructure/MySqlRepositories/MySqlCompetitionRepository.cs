@@ -9,8 +9,10 @@ public class MySqlCompetitionRepository(MySqlDbContext dbContext) : MySqlReposit
 
     public async Task<Competition?> FindByIdFullTreeAsync(int id) {
         return await _db.Competitions
+            .AsNoTracking() // Prevent EF Core from adding subgroups to top-level Groups collection.
+            .Include(c => c.Organizer)
             .Include(c => c.Participations.OrderBy(p => p.ShooterClass).ThenBy(p => p.Shooter!.Lastname).ThenBy(p => p.Shooter!.Firstname))
-            .ThenInclude(p=>p.Shooter)
+            .ThenInclude(p => p.Shooter)
             .Include(c => c.Disciplines)
             .Include(c => c.Recorders)
             .Include(c => c.Groups.Where(g => g.ParentGroupId == null)) // Only top-level groups.
@@ -18,6 +20,7 @@ public class MySqlCompetitionRepository(MySqlDbContext dbContext) : MySqlReposit
             .ThenInclude(sg => sg.Participations)
             .Include(c => c.Groups.Where(g => g.ParentGroupId == null))
             .ThenInclude(g => g.Participations)
+            .AsSplitQuery() // Use split query to avoid cartesian explosion.
             .FirstOrDefaultAsync(c => c.Id == id);
     }
 
@@ -35,10 +38,18 @@ public class MySqlCompetitionRepository(MySqlDbContext dbContext) : MySqlReposit
 
     public async Task<Competition?> FindByIdWithFullParticipationsAsync(int id) {
         return await _db.Competitions
+            .Include(c => c.Disciplines)
             .Include(c => c.Participations)
             .ThenInclude(p => p.Shooter)
             .Include(c => c.Participations)
             .ThenInclude(p => p.Discipline)
+            .FirstOrDefaultAsync(c => c.Id == id);
+    }
+
+    public async Task<Competition?> FindByIdWithOrgAndRecordersAsync(int id) {
+        return await _db.Competitions
+            .Include(c => c.Organizer)
+            .Include(c => c.Recorders)
             .FirstOrDefaultAsync(c => c.Id == id);
     }
 
