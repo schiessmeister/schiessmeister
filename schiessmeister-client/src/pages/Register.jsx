@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { registerRequest, loginRequest } from '../api/authService';
+import { registerRequest, loginRequest, getOwnedOrganizations } from '../api/authService';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -25,7 +25,10 @@ const Register = () => {
 		try {
 			await registerRequest(username, firstname, lastname, gender, birthdate, email, password);
 			const data = await loginRequest(username, password);
-			login(data.token, data.id);
+			const orgs = await getOwnedOrganizations(data.id, data.token);
+
+			// Login with user info and organizations
+			login(data.token, data.id, data.fullName, orgs || []);
 		} catch (error) {
 			// Handle both error.message and direct error string
 			const errorMsg = error.message || error.toString() || 'Registration failed';

@@ -17,6 +17,7 @@ import { AuthProvider } from './context/AuthContext';
 import { DataProvider } from './context/DataContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import UserHeader from './components/UserHeader';
+import { Toaster } from '@/components/ui/sonner';
 
 export default function App() {
 	return (
@@ -30,6 +31,7 @@ export default function App() {
 						<Route path="login" element={<Login />} />
 						<Route path="register" element={<Register />} />
 						<Route path="logout" element={<Logout />} />
+						<Route path="competitions/:id/leaderboard" element={<CompetitionLeaderboard />} />
 
 						{/* Protected routes */}
 						<Route element={<ProtectedRoute />}>
@@ -38,7 +40,6 @@ export default function App() {
 							<Route path="competitions/new" element={<CreateCompetition />} />
 							<Route path="competitions/:id" element={<CompetitionDetail editable={false} />} />
 							<Route path="competitions/:id/edit" element={<EditCompetition />} />
-							<Route path="competitions/:id/leaderboard" element={<CompetitionLeaderboard />} />
 							<Route path="participant-groups/:id/edit" element={<EditParticipantGroup />} />
 							<Route path="competitions/:competitionId/participationGroups/:groupId" element={<WriterParticipantGroupView />} />
 							<Route path="participantsList/:id" element={<WriterParticipantsList />} />
@@ -48,6 +49,7 @@ export default function App() {
 						<Route path="/" element={<Navigate to="/login" replace />} />
 						<Route path="*" element={<Navigate to="/login" replace />} />
 					</Routes>
+					<Toaster />
 				</DataProvider>
 			</AuthProvider>
 		</BrowserRouter>

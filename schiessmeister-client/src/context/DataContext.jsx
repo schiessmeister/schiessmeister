@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect } from 'react';
-import { getCompetitionsByOrganization, getCompetition, getRecordedCompetitions } from '../api/apiClient';
+import { getCompetitionsByOrganization, getCompetition, getRecordedCompetitions, createCompetition, updateCompetition as updateCompetitionApi } from '../api/apiClient';
 import { useAuth } from './AuthContext';
 
 const DataContext = createContext(null);
@@ -7,6 +7,7 @@ const DataContext = createContext(null);
 export const DataProvider = ({ children }) => {
 	const [competitions, setCompetitions] = useState([]);
 	const [competitionsByOrganization, setCompetitionsByOrganization] = useState({});
+	const [isLoading, setIsLoading] = useState(true);
 	const { token, userId, ownedOrganizations, handleUnauthorized } = useAuth();
 
 	useEffect(() => {
@@ -14,9 +15,11 @@ export const DataProvider = ({ children }) => {
 			if (!token || !userId) {
 				setCompetitions([]);
 				setCompetitionsByOrganization({});
+				setIsLoading(false);
 				return;
 			}
 
+			setIsLoading(true);
 			try {
 				const allCompetitions = [];
 				const compsByOrg = {};
@@ -59,8 +62,15 @@ export const DataProvider = ({ children }) => {
 							}
 							try {
 								const detailed = await getCompetition(c.id, { token, handleUnauthorized });
-								// Mark as recorder
-								return { ...detailed, isOwner: false, isRecorder: true };
+								// Mark as recorder and use organization data from the recorded competitions list
+								// (which already includes organizer data from the backend)
+								return {
+									...detailed,
+									organizationId: c.organizerId,
+									organizationName: c.organizer?.name,
+									isOwner: false,
+									isRecorder: true
+								};
 							} catch {
 								return null;
 							}
@@ -93,16 +103,39 @@ export const DataProvider = ({ children }) => {
 				console.error('Error fetching competitions:', err);
 				setCompetitions([]);
 				setCompetitionsByOrganization({});
+			} finally {
+				setIsLoading(false);
 			}
 		};
 
 		fetchAllCompetitions();
 	}, [token, userId, ownedOrganizations, handleUnauthorized]);
 
-	// Competition im State aktualisieren
-	const updateCompetition = (competitionId, updatedCompetition) => {
-		setCompetitions((prev) => prev.map((c) => (c.id === competitionId ? { ...c, ...updatedCompetition } : c)));
-		// Hier könnte ggf. noch ein API-Call erfolgen, falls Backend-Sync nötig ist
+	// Update competition in backend and local state.
+	const updateCompetition = async (competitionId, updatedCompetition) => {
+		try {
+			await updateCompetitionApi(competitionId, updatedCompetition, { token, handleUnauthorized });
+			// Fetch the updated competition from backend to ensure consistency.
+			const updatedFromBackend = await getCompetition(competitionId, { token, handleUnauthorized });
+
+			// Update in competitions list.
+			setCompetitions((prev) => prev.map((c) => (c.id === competitionId ? { ...c, ...updatedFromBackend } : c)));
+
+			// Update in competitionsByOrganization.
+			setCompetitionsByOrganization((prev) => {
+				const newState = { ...prev };
+				Object.keys(newState).forEach((orgId) => {
+					newState[orgId] = {
+						...newState[orgId],
+						competitions: newState[orgId].competitions.map((c) => (c.id === competitionId ? { ...c, ...updatedFromBackend } : c))
+					};
+				});
+				return newState;
+			});
+		} catch (err) {
+			console.error('Error updating competition:', err);
+			throw err;
+		}
 	};
 
 	// Rekursive Zählfunktion für Teilnehmer in allen Gruppen
@@ -111,16 +144,71 @@ export const DataProvider = ({ children }) => {
 			if (!groups) return 0;
 			return groups.reduce((sum, g) => {
 				const groupCount = Array.isArray(g.participations) ? g.participations.length : 0;
-				const subCount = g.subParticipationGroups ? countInGroups(g.subParticipationGroups) : 0;
+				const subCount = g.subGroups ? countInGroups(g.subGroups) : 0;
 				return sum + groupCount + subCount;
 			}, 0);
 		}
-		const groupCount = countInGroups(competition.participantGroups);
+		const groupCount = countInGroups(competition.groups);
 		const directCount = Array.isArray(competition.participations) ? competition.participations.length : 0;
 		return groupCount > 0 ? groupCount : directCount;
 	}
 
-	return <DataContext.Provider value={{ competitions, competitionsByOrganization, countParticipantsRecursive, updateCompetition }}>{children}</DataContext.Provider>;
+	// Add a new competition.
+	const addCompetition = async (organizationId, competitionData) => {
+		try {
+			const newCompetition = await createCompetition(organizationId, competitionData, { token, handleUnauthorized });
+			// Fetch the full competition details.
+			const detailedCompetition = await getCompetition(newCompetition.id, { token, handleUnauthorized });
+			// Add to the competitions list.
+			setCompetitions((prev) => [...prev, { ...detailedCompetition, isOwner: true, isRecorder: false }]);
+			// Add to competitionsByOrganization.
+			if (detailedCompetition.organizationId) {
+				setCompetitionsByOrganization((prev) => {
+					const orgId = detailedCompetition.organizationId;
+					const updatedOrg = prev[orgId] || { organization: { id: orgId, name: detailedCompetition.organizationName || 'Unbekannte Organisation' }, competitions: [] };
+					return {
+						...prev,
+						[orgId]: {
+							...updatedOrg,
+							competitions: [...updatedOrg.competitions, { ...detailedCompetition, isOwner: true, isRecorder: false }]
+						}
+					};
+				});
+			}
+			return detailedCompetition;
+		} catch (err) {
+			console.error('Error creating competition:', err);
+			throw err;
+		}
+	};
+
+	// Refresh competition from backend without updating
+	const refreshCompetition = async (competitionId) => {
+		try {
+			// Fetch the updated competition from backend
+			const updatedFromBackend = await getCompetition(competitionId, { token, handleUnauthorized });
+
+			// Update in competitions list
+			setCompetitions((prev) => prev.map((c) => (c.id === competitionId ? { ...c, ...updatedFromBackend } : c)));
+
+			// Update in competitionsByOrganization
+			setCompetitionsByOrganization((prev) => {
+				const newState = { ...prev };
+				Object.keys(newState).forEach((orgId) => {
+					newState[orgId] = {
+						...newState[orgId],
+						competitions: newState[orgId].competitions.map((c) => (c.id === competitionId ? { ...c, ...updatedFromBackend } : c))
+					};
+				});
+				return newState;
+			});
+		} catch (err) {
+			console.error('Error refreshing competition:', err);
+			throw err;
+		}
+	};
+
+	return <DataContext.Provider value={{ competitions, competitionsByOrganization, isLoading, countParticipantsRecursive, updateCompetition, addCompetition, refreshCompetition }}>{children}</DataContext.Provider>;
 };
 
 export const useData = () => {

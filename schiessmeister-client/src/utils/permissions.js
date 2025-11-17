@@ -46,6 +46,16 @@ export const canEditParticipations = (competition, ownedOrganizations, userId) =
 };
 
 /**
+ * Check if user can manage participant groups (only owners)
+ * @param {Object} competition
+ * @param {Array} ownedOrganizations
+ * @returns {boolean}
+ */
+export const canManageParticipantGroups = (competition, ownedOrganizations) => {
+	return isCompetitionOwner(competition, ownedOrganizations);
+};
+
+/**
  * Check if user has any access to the competition
  * (owner, recorder, or has participation)
  * TODO: Add only participation check
