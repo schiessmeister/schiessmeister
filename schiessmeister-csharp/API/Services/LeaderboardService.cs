@@ -41,7 +41,8 @@ public class LeaderboardService : ILeaderboardService {
             .GroupBy(p => p.DisciplineId)
             .ToDictionary(g => g.Key, g => g.ToList());
 
-        foreach (var discipline in competition.Disciplines) {
+        // Sort disciplines by ID to ensure consistent ordering
+        foreach (var discipline in competition.Disciplines.OrderBy(d => d.Id)) {
             if (!participationsByDiscipline.TryGetValue(discipline.Id, out var disciplineParticipations))
                 continue;
 

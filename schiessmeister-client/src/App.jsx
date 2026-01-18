@@ -16,45 +16,44 @@ import { createRoot } from 'react-dom/client';
 import { AuthProvider } from './context/AuthContext';
 import { DataProvider } from './context/DataContext';
 import ProtectedRoute from './components/ProtectedRoute';
-import RoleSwitch from './components/RoleSwitch';
+import UserHeader from './components/UserHeader';
+import { Toaster } from '@/components/ui/sonner';
 
 export default function App() {
-        return (
-                <BrowserRouter>
-                        <AuthProvider>
-                                <DataProvider>
-                                        {/* Role Switch mit integriertem Logout */}
-                                        <RoleSwitch />
-                                        <Routes>
-                                                {/* Public routes */}
-                                                <Route path="login" element={<Login />} />
-                                                <Route path="register" element={<Register />} />
-                                                <Route path="logout" element={<Logout />} />
+	return (
+		<BrowserRouter>
+			<AuthProvider>
+				<DataProvider>
+					{/* User Header mit Logout */}
+					<UserHeader />
+					<Routes>
+						{/* Public routes */}
+						<Route path="login" element={<Login />} />
+						<Route path="register" element={<Register />} />
+						<Route path="logout" element={<Logout />} />
+						<Route path="competitions/:id/leaderboard" element={<CompetitionLeaderboard />} />
 
-                                                {/* Protected routes */}
-                                                <Route element={<ProtectedRoute />}>
-                                                        {/* Manager */}
-                                                        <Route path="manager/competitions" element={<Competitions />} />
-                                                        <Route path="manager/competitions/new" element={<CreateCompetition />} />
-                                                        <Route path="manager/competitions/:id" element={<CompetitionDetail editable={false} />} />
-                                                        <Route path="manager/competitions/:id/edit" element={<EditCompetition />} />
-                                                        <Route path="manager/competitions/:id/leaderboard" element={<CompetitionLeaderboard />} />
-                                                        <Route path="manager/participant-groups/:id/edit" element={<EditParticipantGroup />} />
-                                                        
-                                                        {/* Writer */}
-                                                        <Route path="writer/competitions" element={<Competitions />} />
-                                                        <Route path="writer/competitions/:competitionId/participationGroups/:groupId" element={<WriterParticipantGroupView />} />
-                                                        <Route path="writer/participantsList/:id" element={<WriterParticipantsList />} />
-                                                </Route>
+						{/* Protected routes */}
+						<Route element={<ProtectedRoute />}>
+							{/* Unified competitions path */}
+							<Route path="competitions" element={<Competitions />} />
+							<Route path="competitions/new" element={<CreateCompetition />} />
+							<Route path="competitions/:id" element={<CompetitionDetail editable={false} />} />
+							<Route path="competitions/:id/edit" element={<EditCompetition />} />
+							<Route path="participant-groups/:id/edit" element={<EditParticipantGroup />} />
+							<Route path="competitions/:competitionId/participationGroups/:groupId" element={<WriterParticipantGroupView />} />
+							<Route path="participantsList/:id" element={<WriterParticipantsList />} />
+						</Route>
 
-                                                {/* Redirects */}
-                                                <Route path="/" element={<Navigate to="/login" replace />} />
-                                                <Route path="*" element={<Navigate to="/login" replace />} />
-                                        </Routes>
-                                </DataProvider>
-                        </AuthProvider>
-                </BrowserRouter>
-        );
+						{/* Redirects */}
+						<Route path="/" element={<Navigate to="/login" replace />} />
+						<Route path="*" element={<Navigate to="/login" replace />} />
+					</Routes>
+					<Toaster />
+				</DataProvider>
+			</AuthProvider>
+		</BrowserRouter>
+	);
 }
 
 createRoot(document.getElementById('root')).render(

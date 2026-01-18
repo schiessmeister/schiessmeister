@@ -7,16 +7,24 @@ namespace schiessmeister_csharp.Infrastructure.MySqlRepositories;
 
 public class ParticipationRepository : MySqlRepositoryBase<Participation>, IParticipationRepository {
     private readonly ICompetitionNotificationService _notificationService;
+    private readonly ICompetitionRepository _competitionRepository;
 
-    public ParticipationRepository(MySqlDbContext dbContext, ICompetitionNotificationService notificationService) : base(dbContext, dbContext.Participations) {
+    public ParticipationRepository(MySqlDbContext dbContext, ICompetitionNotificationService notificationService, ICompetitionRepository competitionRepository) : base(dbContext, dbContext.Participations) {
         _notificationService = notificationService;
+        _competitionRepository = competitionRepository;
     }
 
-    public override Task<Participation> UpdateAsync(Participation entity) {
-        // TODO call notification and send leaderboard update
-        //_notificationService.NotifyCompetitionUpdated(comp);
+    public override async Task<Participation> UpdateAsync(Participation entity) {
+        var result = await base.UpdateAsync(entity);
 
-        return base.UpdateAsync(entity);
+        // Load full competition data for notification using existing repository method
+        var competition = await _competitionRepository.FindByIdWithFullParticipationsAsync(entity.CompetitionId);
+
+        if (competition != null) {
+            await _notificationService.NotifyLeaderboardUpdated(competition);
+        }
+
+        return result;
     }
 
     public async Task<Participation?> FindByIdWithCompOrgAsync(int id) {

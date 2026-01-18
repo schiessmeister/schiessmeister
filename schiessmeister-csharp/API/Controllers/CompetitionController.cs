@@ -14,17 +14,20 @@ public class CompetitionController : ControllerBase {
     private readonly IParticipationGroupRepository _participationGroups;
     private readonly IDisciplineRepository _disciplines;
     private readonly ILeaderboardService _leaderboardService;
+    private readonly IAppUserRepository _users;
 
     public CompetitionController(
         ICompetitionRepository competitions,
         IParticipationGroupRepository participationGroups,
         IDisciplineRepository disciplines,
-        ILeaderboardService leaderboardService
+        ILeaderboardService leaderboardService,
+        IAppUserRepository users
     ) {
         _competitions = competitions;
         _participationGroups = participationGroups;
         _disciplines = disciplines;
         _leaderboardService = leaderboardService;
+        _users = users;
     }
 
     [HttpGet("{id}")]
@@ -49,7 +52,7 @@ public class CompetitionController : ControllerBase {
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<ActionResult<Competition>> UpdateCompetition(int id, Competition newComp) {
-        var comp = await _competitions.FindByIdWithOrgAsync(id);
+        var comp = await _competitions.FindByIdWithOrgAndRecordersAsync(id);
 
         if (comp == null)
             return NotFound();
@@ -61,8 +64,30 @@ public class CompetitionController : ControllerBase {
             return BadRequest("Cannot change the organizer of a competition.");
         }
 
-        newComp.Id = id;
-        return Ok(await _competitions.UpdateAsync(newComp));
+        // Update the properties of the existing tracked entity to avoid tracking conflicts.
+        comp.Title = newComp.Title;
+        comp.Location = newComp.Location;
+        comp.StartDateTime = newComp.StartDateTime;
+        comp.EndDateTime = newComp.EndDateTime;
+        comp.AvailableClasses = newComp.AvailableClasses;
+        comp.AnnouncementUrl = newComp.AnnouncementUrl;
+        // Note: OrganizerId is already validated and should not be changed.
+        // Note: Disciplines are managed separately via DisciplineController.
+
+        // Update recorders if RecorderIds are provided.
+        if (newComp.RecorderIds != null) {
+            comp.Recorders.Clear();
+            if (newComp.RecorderIds.Length > 0) {
+                foreach (int recorderId in newComp.RecorderIds) {
+                    var recorder = await _users.FindByIdAsync(recorderId);
+                    if (recorder != null) {
+                        comp.Recorders.Add(recorder);
+                    }
+                }
+            }
+        }
+
+        return Ok(await _competitions.UpdateAsync(comp));
     }
 
     [HttpDelete("{id}")]
@@ -154,9 +179,6 @@ public class CompetitionController : ControllerBase {
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<List<Leaderboard>>> GetLeaderboards(int id) {
         var leaderboards = await _leaderboardService.GetLeaderboardsAsync(id);
-
-        if (leaderboards.Count == 0)
-            return NotFound();
 
         return Ok(leaderboards);
     }

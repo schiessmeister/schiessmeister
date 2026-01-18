@@ -13,10 +13,12 @@ namespace schiessmeister_csharp.API.Controllers;
 public class ParticipationGroupController : ControllerBase {
     private readonly IParticipationGroupRepository _participationGroup;
     private readonly IParticipationRepository _participation;
+    private readonly IDisciplineRepository _discipline;
 
-    public ParticipationGroupController(IParticipationGroupRepository participationGroup, IParticipationRepository participation) {
+    public ParticipationGroupController(IParticipationGroupRepository participationGroup, IParticipationRepository participation, IDisciplineRepository discipline) {
         _participationGroup = participationGroup;
         _participation = participation;
+        _discipline = discipline;
     }
 
     [HttpPut("{id}")]
@@ -36,9 +38,14 @@ public class ParticipationGroupController : ControllerBase {
         if (newGroup.SubGroups.Count > 0 && newGroup.Participations.Count > 0)
             return BadRequest("A participation group cannot have both subgroups and participations.");
 
-        newGroup.Id = id;
+        // Update properties of the existing tracked entity to avoid tracking conflicts.
+        participationGroup.Title = newGroup.Title;
+        participationGroup.StartDateTime = newGroup.StartDateTime;
+        participationGroup.EndDateTime = newGroup.EndDateTime;
+        // Note: SubGroups and Participations should not be updated here, 
+        // they should be managed via their own endpoints.
 
-        return Ok(await _participationGroup.UpdateAsync(newGroup));
+        return Ok(await _participationGroup.UpdateAsync(participationGroup));
     }
 
     [HttpDelete("{id}")]
@@ -101,7 +108,12 @@ public class ParticipationGroupController : ControllerBase {
         newSubGroup.CompetitionId = participationGroup.CompetitionId;
         await _participationGroup.AddAsync(newSubGroup);
 
-        return CreatedAtAction(nameof(CompetitionController.GetCompetition), new { id = newSubGroup.Id }, newSubGroup);
+        return CreatedAtAction(
+            nameof(CompetitionController.GetCompetition),
+            "Competition",
+            new { id = participationGroup.CompetitionId },
+            newSubGroup
+        );
     }
 
     [HttpPost("{id}/participations")]
@@ -118,16 +130,26 @@ public class ParticipationGroupController : ControllerBase {
         if (User.GetUserId() != participationGroup.Competition!.Organizer!.OwnerId)
             return Forbid();
 
-        if (participation.Discipline?.CompetitionId != participationGroup.Competition!.Id)
+        // Validate the discipline belongs to the competition
+        var discipline = await _discipline.FindByIdAsync(participation.DisciplineId);
+        if (discipline == null)
+            return BadRequest("Discipline not found.");
+
+        if (discipline.CompetitionId != participationGroup.Competition!.Id)
             return BadRequest("A participation can only have a discipline of the attended competition.");
 
-        if (participation.ShooterId != participation.RecorderId)
+        if (participation.ShooterId == participation.RecorderId)
             return BadRequest("The shooter is not allowed to record himself.");
 
         participation.ParticipationGroupId = id;
         participation.CompetitionId = participationGroup.CompetitionId;
         await _participation.AddAsync(participation);
 
-        return CreatedAtAction(nameof(CompetitionController.GetCompetition), new { id = participation.Id }, participation);
+        return CreatedAtAction(
+            nameof(CompetitionController.GetCompetition),
+            "Competition",
+            new { id = participationGroup.CompetitionId },
+            participation
+        );
     }
 }
